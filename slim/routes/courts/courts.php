@@ -61,14 +61,13 @@ class Courts {
         $db = DB::getConnection();
         //esto lo separo en dos consultas literal, primero si tiene un reserva (asi si npo la tiene el error es mas especifico), y con ese resultado de la consulta hacer (o no) el eliiminar
         
-        $stmt = $db->prepare"(SELECT * FROM booking WHERE court_id = ? )";
+        $stmt = $db->prepare("SELECT * FROM booking WHERE court_id = ? ");
         $stmt->execute([$unId]);//retorna F o V
-                                           
+
         if ($stmt){ //si lo elim devuelve v o f
             $elim = $db->prepare ("DELETE FROM courts WHERE id = ?")
             return $elim->execute([$unId]); //retorna F o V
         }
-                                           
         //sino lo pudo elim devuelve las resevas que tiene
         return $stmt->fetchAll(PDO::FETCH_ASSOC);//
         
