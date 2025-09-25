@@ -20,7 +20,7 @@ $app->add( function ($request, $handler) {
     ;
 });
 
-// ACÁ VAN LOS ENDPOINTS
+// ACÁ VAN LOS ENDPOINTS 
 
 // Auth
 require __DIR__ . '/routes/auth/auth.php';
@@ -42,6 +42,8 @@ $app->get('/', function (Request $request, Response $response, $args) {
     $response->getBody()->write("API REST para Seminario de PHP works! - Emanuel Marcello");
     return $response;
 });
+
+// lizeth
 
 //php -S localhost:8000
 $app->run();
