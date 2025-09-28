@@ -28,8 +28,6 @@ class Courts {
 
     }
 
-
-
     public static function buscarPorNombre($unName) {
         $db = DB::getConnection();
         $stmt = $db->prepare("SELECT * from courts WHERE name = ?"); // ? porque la consulta la paso por parametro 

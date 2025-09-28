@@ -39,7 +39,7 @@ require __DIR__ . '/routes/participants/participants.php';
 
 // server works?
 $app->get('/', function (Request $request, Response $response, $args) {
-    $response->getBody()->write("API REST para Seminario de PHP works! - Emanuel Marcello");
+    $response->getBody()->write("API REST para Seminario de PHP works! - Emanuel Marcello y Lizeth Ordoñez");
     return $response;
 });
 
