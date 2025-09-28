@@ -10,7 +10,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 // POST /login
 $app->post('/login', function (Request $request, Response $response) {
-    return $response->withHeader('Content-Type', 'application/json')->withStatus(501);
+    
 });
 
 // POST /logout
