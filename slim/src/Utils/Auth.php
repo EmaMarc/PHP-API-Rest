@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/../../src/utils/DB.php';
+require_once __DIR__ . '/../../src/Utils/DB.php';
 
 final class Auth {
   public static function makeToken(): string {
