@@ -55,6 +55,8 @@ class Courts {
     }
 
 
+/*  CORREGIR------
+
     public static function eliminar($unId){//elimina solo si no tiene reservas
         $db = DB::getConnection();
         //esto lo separo en dos consultas literal, primero si tiene un reserva (asi si npo la tiene el error es mas especifico), y con ese resultado de la consulta hacer (o no) el eliiminar
@@ -69,6 +71,6 @@ class Courts {
         //sino lo pudo elim devuelve las resevas que tiene
         return $stmt->fetchAll(PDO::FETCH_ASSOC);//
         
-    }
+    } */
 
 }
