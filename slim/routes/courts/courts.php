@@ -1,7 +1,7 @@
 <?php
 
-// DB imported
-require_once __DIR__ . '/../../src/Utils/DB.php';
+// db imported
+require_once __DIR__ . '/../../src/Utils/db.php';
 
 class Courts {
     

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-use App\Utils\DB;
+use App\Utils\db;
 use App\Utils\Auth;
 
 use Psr\Http\Message\ResponseInterface as Response;

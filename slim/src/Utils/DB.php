@@ -1,6 +1,6 @@
 <?php
 
-class DB {
+class db {
     private static $connection;
 
     public static function getConnection() {
