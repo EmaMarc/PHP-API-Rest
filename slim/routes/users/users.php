@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 
-require_once __DIR__ . '/../../src/utils/db.php';
+require_once __DIR__ . '/../../src/Utils/db.php';
 
 use App\Modules\UsersModule;
 use Psr\Http\Message\ResponseInterface as Response;

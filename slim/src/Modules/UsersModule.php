@@ -1,16 +1,21 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/../utils/db.php';
+namespace App\Modules;
+
+require_once __DIR__ . '/../Utils/db.php';
 
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use PDO;
 
+
 final class UsersModule {
+  //Funciones para users
+  
   // GET /users
-  public static function index(Request $req, Response $res): Response {
-    $db = DB::getConnection();
+  public static function getAllUsers(Request $req, Response $res): Response {
+    $db = \DB::getConnection();
 
     $sql = "SELECT id, email, first_name, last_name, is_admin
             FROM users
