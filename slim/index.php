@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('America/Argentina/Buenos_Aires');
 
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -42,8 +43,6 @@ $app->get('/', function (Request $request, Response $response, $args) {
     $response->getBody()->write("API REST para Seminario de PHP works! - Emanuel Marcello y Lizeth Ordoñez");
     return $response;
 });
-
-// lizeth
 
 //php -S localhost:8000
 $app->run();
