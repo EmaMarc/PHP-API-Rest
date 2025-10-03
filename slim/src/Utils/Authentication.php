@@ -25,4 +25,6 @@ final class Authentication {
   public static function verifyPassword(string $plain, string $stored): bool {
     return $plain === $stored; 
   }
+
+  
 }

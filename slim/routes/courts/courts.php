@@ -9,8 +9,8 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 
 // GET /users - Get all users
-$app->get('/users', [UsersModule::class, 'getAllUsers']);
+/* $app->get('/users', [UsersModule::class, 'getAllUsers']);
 
 
 // GET /user/{id} - getUserById
-$app->get('/user/{id}', [UsersModule::class, 'getUserById']);
+$app->get('/user/{id}', [UsersModule::class, 'getUserById']); */

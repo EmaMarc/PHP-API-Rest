@@ -1,6 +1,6 @@
 <?php
 
-// DB imported
+/* // DB imported
 
 require_once __DIR__ . '/../Utils/db.php';
 
@@ -77,4 +77,4 @@ class Courts {
         
     }
 
-}
+} */

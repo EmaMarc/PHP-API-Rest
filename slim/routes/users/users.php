@@ -9,7 +9,7 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
 
-// GET /users - Get all users
+// GET /users - Get users
 $app->get('/users', [UsersModule::class, 'getAllUsers']);
 
 // GET /user/{id} - getUserById
