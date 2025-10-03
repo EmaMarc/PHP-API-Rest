@@ -26,5 +26,25 @@ final class Authentication {
     return $plain === $stored; 
   }
 
-  
+  /**
+   * Regla de autorización centralizada.
+   * $permission: nombre de la acción (p.ej. 'user.edit')
+   * $ctx: contexto adicional (p.ej. ['userId' => 123])
+  */
+  //$auth = id y is admin, $permission la accion a verificar, $ctx contexto adicional
+  public static function isAuthorized(array $auth, string $permission, array $ctx = []): bool {
+    switch ($permission) {
+      case 'user.edit':
+        return (int)($auth['is_admin'] ?? 0) === 1
+            || (int)($auth['id'] ?? 0) === (int)($ctx['userId'] ?? 0);
+
+      // Más adelante podés sumar reglas:
+      // case 'booking.create': ...
+      // case 'booking.cancel': ...
+      default:
+        return false; // por defecto, no autorizado
+    }
+
+  }
+
 }
