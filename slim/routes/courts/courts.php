@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 
 require_once __DIR__ . '/../../src/Utils/db.php';
+
+
 use App\Modules\CourtsModule;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -14,3 +16,6 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 // GET /user/{id} - getUserById
 $app->get('/user/{id}', [UsersModule::class, 'getUserById']); */
+
+//GET /{id} obtiene la informacion de cancha
+$app->get('/court/{id}', [CourtsModule::class, 'getCourtsById']); 
