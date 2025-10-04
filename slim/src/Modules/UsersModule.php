@@ -278,4 +278,63 @@ final class UsersModule {
     $res->getBody()->write(json_encode($row, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
     return $res->withHeader('Content-Type','application/json; charset=utf-8');
   }
+
+
+
+  // DELETE /user/{id} -------------------------------------------------------------------------------
+  public static function deleteUser(Request $req, Response $res, array $args): Response {
+    $targetId = (int)($args['id']);//id desde la ruta
+
+    //Valido si la id es menor o igual a 0
+    if ($targetId <= 0) {
+      $res->getBody()->write(json_encode(['error' => 'ID inválido']));
+      return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400);
+    }
+
+    $auth = $req->getAttribute('auth_user'); // id y is_admin desde el token (validado por el middleware)
+
+    //pregunto si esta autorizado y le paso auth, la accion a realizar y id del usuario a modificar
+    if (!\Authentication::isAuthorized($auth, 'user.edit', ['userId' => $targetId])) {
+        $res->getBody()->write(json_encode(['error' => 'No autorizado']));
+        return $res->withHeader('Content-Type','application/json; charset=utf-8')
+                    ->withStatus(401);
+    }
+
+    $db = \DB::getConnection();
+
+    //busco el usuario a borrar
+    $row = $db->query("SELECT id, is_admin FROM users WHERE id = $targetId LIMIT 1")
+              ->fetch(\PDO::FETCH_ASSOC);
+
+    //si no existe, retorno error 404
+    if (!$row) {
+        $res->getBody()->write(json_encode(['error' => 'Usuario no encontrado']));
+        return $res->withHeader('Content-Type','application/json; charset=utf-8')
+                    ->withStatus(404);
+    }
+
+    //si es admin, retorno error 400
+    if ((int)$row['is_admin'] === 1) {
+        $res->getBody()->write(json_encode(['error' => 'No se puede eliminar un usuario administrador']));
+        return $res->withHeader('Content-Type','application/json; charset=utf-8')
+                    ->withStatus(400);
+    }
+
+    //ACA VERIFICARIA SI EL USUARIO TIENE RESERVAS
+    //SELECT 1 FROM bookings WHERE user_id = $targetId LIMIT 1
+    //$hasBookings = $db->query("SELECT 1 FROM bookings WHERE user_id = $targetId LIMIT 1")->fetchColumn();
+    //if ($hasBookings) {
+    //  $res->getBody()->write(json_encode(['error' => 'El usuario tiene reservas y no se puede eliminar']));
+    //  return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(409);
+    //}
+    //------------------------------------------------------------
+
+    //si no tiene reservas, lo borro
+    $db->exec("DELETE FROM users WHERE id = $targetId LIMIT 1");
+
+    $res->getBody()->write(json_encode(['ok' => true, 'deleted_id' => $targetId]));
+    return $res->withHeader('Content-Type','application/json; charset=utf-8');
+  
+  }
+
 }
