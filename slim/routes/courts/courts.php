@@ -11,7 +11,6 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 
 
-$app->get('/court', [CourtsModule::class, 'getAll']); 
 
 
 // POST crea una cancha

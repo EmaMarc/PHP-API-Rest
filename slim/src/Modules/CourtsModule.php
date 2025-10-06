@@ -16,17 +16,6 @@ use PDO;
 
 final class CourtsModule{
 
-    // Get all users from the database
-    public static function getAll(){
-        $db = \DB::getConnection();
-        
-        $stmt = $db->query("SELECT * FROM courts");
-        $row = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        $res->getBody()->write(json_encode($row));
-        return $res->withHeader('Content-Type', 'application/json')->withStatus(200);
-    }
-
 
     public static function createCourts(Request $req, Response $res): Response {
 
