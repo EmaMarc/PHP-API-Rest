@@ -12,3 +12,8 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 //DELETE elimina una reserva
 $app->delete('/booking/{id}', [BookingsModule::class, 'eliminar']); 
+
+
+//GET muestras las reservas de un dia    /bookings?date=2025-10-06
+//no hace falta ponerle lo que esta despues del ? slim no lo reconoce 
+$app->get('/booking', [BookingsModule::class, 'reservas']);
