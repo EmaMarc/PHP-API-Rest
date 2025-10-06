@@ -20,8 +20,8 @@ $app->post('/court', [CourtsModule::class, 'createCourts']);
 //PUT edita una cancha
 $app->put('/court/{id}', [CourtsModule::class, 'editar']); 
 
-//
-//$app->post('/court', [CourtsModule::class, 'createCourts']); 
+//DELETE elimina una cancha 
+$app->delete('/court/{id}', [CourtsModule::class, 'eliminar']); 
 
 
 //GET /{id} obtiene la informacion de cancha

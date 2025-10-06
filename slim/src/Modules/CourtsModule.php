@@ -130,42 +130,39 @@ final class CourtsModule{
 
     }
 
-    /*
-    //que campos se pueden editar ?? ambos o solo uno 
-    //aca se sebe ir contruyendo la consulta mientras voy preguntando que campo no esta vacio porque se puede modificar un campo o el otro o ambos campos
-    public static function editar($unId, $unName, $unaDescription){
-        $db = DB::getConnection();
-        $stmt = $db->prepare("UPDATE courts SET name = ? description = ? WHERE id = ?");
-        
-        return $stmt->execute([$unName, $unaDescription,$unId]); //retorna F o V
-        
-    }
 
+    public static function eliminar(Request $req, Response $res, array $args): Response {
+        $id = (int)($args['id']);
 
-
-
-    public static function eliminar($unId){//elimina solo si no tiene reservas
-        $db = DB::getConnection();
-        //esto lo separo en dos consultas literal, primero si tiene un reserva (asi si npo la tiene el error es mas especifico), y con ese resultado de la consulta hacer (o no) el eliiminar
-        
-        $stmt = $db->prepare("SELECT * FROM booking WHERE court_id = ? ");
-        $stmt->execute([$unId]);//retorna F o V
-        $res = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        if (empty($res)){ //si lo elim devuelve v o f
-            $elim = $db->prepare ("DELETE FROM courts WHERE id = ?");
-            return $elim->execute([$unId]); //retorna F o V
-        }else {
-            //sino lo pudo elim devuelve las resevas que tiene
-            return $res;//
+        if (!$id) { //id vacio o no numerico 
+            
+            $res->getBody()->write(json_encode(['error' => 'Falta el ID de la cancha']));
+            return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
         }
         
+        $db = \DB::getConnection();
         
+        //busco si tiene reservas
+        $stmt = $db->prepare("SELECT * FROM bookings WHERE court_id = ? ");
+        $stmt->execute([$id]);//retorna F o V
+        $row = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        //si res es vacio no hay reservas
+        if (empty($row)){ //si lo elim devuelve v o f
+
+            $elim = $db->prepare ("DELETE FROM courts WHERE id = ?");
+            $elim->execute([$id]); //retorna F o V
+
+            $res->getBody()->write(json_encode(['ok' => true, 'deleted_id' => $id]));
+            return $res->withHeader('Content-Type','application/json; charset=utf-8');
+            
+
+        }else {
+            //sino lo pudo elim devuelve las resevas que tiene
+            $res->getBody()->write(json_encode(['error' => 'La cancha tiene reservas']));
+            return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
+        }
     }
-
-*/
-
-
 
     public static function getCourtsById(Request $req, Response $res, array $args): Response {
         // PHP controla que devuelva un objeto Response
