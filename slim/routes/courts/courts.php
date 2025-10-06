@@ -10,12 +10,19 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
 
-// GET /users - Get all users
-/* $app->get('/users', [UsersModule::class, 'getAllUsers']);
+
+$app->get('/court', [CourtsModule::class, 'getAll']); 
 
 
-// GET /user/{id} - getUserById
-$app->get('/user/{id}', [UsersModule::class, 'getUserById']); */
+// POST crea una cancha
+$app->post('/court', [CourtsModule::class, 'createCourts']); 
+
+//PUT edita una cancha
+$app->put('/court/{id}', [CourtsModule::class, 'editar']); 
+
+//
+//$app->post('/court', [CourtsModule::class, 'createCourts']); 
+
 
 //GET /{id} obtiene la informacion de cancha
 $app->get('/court/{id}', [CourtsModule::class, 'getCourtsById']); 
