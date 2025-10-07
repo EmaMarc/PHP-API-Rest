@@ -183,13 +183,12 @@ final class UsersModule {
     $targetId = (int)($args['id']);//id desde la ruta
     $auth = $req->getAttribute('auth_user'); // id y is_admin desde el token (validado por el middleware)
 
-    //pregunto si esta autorizado y le paso auth, la accion a realizar y id del usuario a modificar
-    if (!\Authentication::isAuthorized($auth, 'user.edit', ['userId' => $targetId])) {
-        $res->getBody()->write(json_encode(['error' => 'No autorizado']));
-        return $res->withHeader('Content-Type','application/json; charset=utf-8')
-                    ->withStatus(401);
+    //pregunto si esta autorizado y le paso auth y id del usuario a modificar
+    if (!\Authentication::isAuthorized($auth, $targetId)) {
+      $res->getBody()->write(json_encode(['error' => 'No autorizado']));
+      return  $res->withHeader('Content-Type','application/json; charset=utf-8')
+                  ->withStatus(401);
     }
-
     //obtengo los datos del body
     $data = json_decode((string)$req->getBody(), true);
 
@@ -293,11 +292,11 @@ final class UsersModule {
 
     $auth = $req->getAttribute('auth_user'); // id y is_admin desde el token (validado por el middleware)
 
-    //pregunto si esta autorizado y le paso auth, la accion a realizar y id del usuario a modificar
-    if (!\Authentication::isAuthorized($auth, 'user.edit', ['userId' => $targetId])) {
-        $res->getBody()->write(json_encode(['error' => 'No autorizado']));
-        return $res->withHeader('Content-Type','application/json; charset=utf-8')
-                    ->withStatus(401);
+    //pregunto si esta autorizado y le paso auth y id del usuario a modificar
+    if (!\Authentication::isAuthorized($auth, $targetId)) {
+      $res->getBody()->write(json_encode(['error' => 'No autorizado']));
+      return  $res->withHeader('Content-Type','application/json; charset=utf-8')
+                  ->withStatus(401);
     }
 
     $db = \DB::getConnection();
