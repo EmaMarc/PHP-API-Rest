@@ -4,11 +4,11 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../src/Utils/db.php';
 
 final class Authentication {
-  public static function makeToken(\PDO $db, int $userId, int $ttlSeconds = 300): ?string {
+  public static function makeToken(\PDO $db, int $userId, int $ttl = 300): ?string {
     //uniqid genera un id unico. Y md5 lo convierte en 32
     $token = md5(uniqid());
-    //expired = ahora + ttlSeconds(5mins)
-    $expired = date('Y-m-d H:i:s', time() + $ttlSeconds);
+    //expired = ahora + ttl(5mins)
+    $expired = date('Y-m-d H:i:s', time() + $ttl);
 
     //actualizo el token y expired en la base de datos
     $sql = "UPDATE users
