@@ -36,4 +36,11 @@ final class Authentication {
     return (int)($auth['id'] ?? 0) === $targetUserId; 
   }
 
+  public static function isAdmin(array $auth): bool {
+    // Admin
+    return (int)($auth['is_admin'] ?? 0) === 1;
+  }
+
 }
+
+
