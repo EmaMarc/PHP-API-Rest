@@ -17,7 +17,7 @@ $app->get('/allUsers', [UsersModule::class, 'getAllUsers']);
 $app->get('/users', [UsersModule::class, 'searchUsers']);
 
 // GET /user/{id} - getUserById
-$app->get('/user/{id}', [UsersModule::class, 'getUserById']);
+$app->get('/user/{id}', [UsersModule::class, 'getUserById'])->add(new AuthMiddleware());
 
 // POST /user - createUser
 $app->post('/user', [UsersModule::class, 'createUser']);

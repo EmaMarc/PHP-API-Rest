@@ -69,6 +69,8 @@ final class UsersModule {
   // GET /user/{id} ---------------------------------------------------------------------------------- 
   public static function getUserById(Request $req, Response $res, array $args): Response {
     $id = $args['id'] ?? 0;
+    $auth = $req->getAttribute('auth_user'); // id y is_admin desde el token (validado por el middleware)
+    $targetId = (int)$id;//id desde la ruta
 
     //Valido si la id no es un numero
     if (!is_numeric($id)) {
@@ -76,6 +78,14 @@ final class UsersModule {
       $res->getBody()->write(json_encode(['error' => 'La ID debe ser un número']));
       return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
     }
+
+    //pregunto si esta autorizado y le paso auth y id del usuario a modificar
+    if (!\Authentication::isAuthorized($auth, $targetId)) {
+      $res->getBody()->write(json_encode(['error' => 'No autorizado']));
+      return  $res->withHeader('Content-Type','application/json; charset=utf-8')
+                  ->withStatus(401);
+    }
+
     
     //casteo a int
     $id = (int)$id;
@@ -102,6 +112,9 @@ final class UsersModule {
         $res->getBody()->write(json_encode(['error' => "Usuario no encontrado"]));
         return $res->withHeader('Content-Type', 'application/json')->withStatus(404);
     }
+
+    //si el token es valido, refresco su expiración
+    \Authentication::refreshToken($db, $id, 300);
 
     //Escribe en el body la respuesta en formato JSON
     $res->getBody()->write(json_encode($row));
@@ -274,6 +287,9 @@ final class UsersModule {
     $row = $db->query("SELECT id, email, first_name, last_name, is_admin FROM users WHERE id = $targetId")
               ->fetch(\PDO::FETCH_ASSOC);
 
+    //si el token es valido, refresco su expiración
+    \Authentication::refreshToken($db, $id, 300);
+
     $res->getBody()->write(json_encode($row, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
     return $res->withHeader('Content-Type','application/json; charset=utf-8');
   }
@@ -300,6 +316,9 @@ final class UsersModule {
     }
 
     $db = \DB::getConnection();
+
+    //si el token es valido, refresco su expiración
+    \Authentication::refreshToken($db, $id, 300);
 
     //busco el usuario a borrar
     $row = $db->query("SELECT id, is_admin FROM users WHERE id = $targetId LIMIT 1")
