@@ -123,12 +123,16 @@ final class CourtsModule{
 
     public static function eliminar(Request $req, Response $res, array $args): Response {
         $id = (int)($args['id']);
+        
+        $auth = $req->getAttribute('auth_user'); // id y is_admin desde el token (validado por el middleware)
+        $targetId = (int)($args['id']);
 
         if (!$id) { //id vacio o no numerico 
             
             $res->getBody()->write(json_encode(['error' => 'Falta el ID de la cancha']));
             return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
         }
+
 
          //pregunto si esta autorizado y le paso auth y id del usuario a modificar
         if (!\Authentication::isAuthorized($auth, $targetId)) {
