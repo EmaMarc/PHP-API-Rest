@@ -6,6 +6,7 @@
  namespace App\Modules;
 
 require_once __DIR__ . '/../Utils/db.php';
+require_once __DIR__ . '/../Utils/Authentication.php';
 
 
 
@@ -127,6 +128,13 @@ final class CourtsModule{
             
             $res->getBody()->write(json_encode(['error' => 'Falta el ID de la cancha']));
             return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
+        }
+
+         //pregunto si esta autorizado y le paso auth y id del usuario a modificar
+        if (!\Authentication::isAuthorized($auth, $targetId)) {
+            $res->getBody()->write(json_encode(['error' => 'No autorizado']));
+            return  $res->withHeader('Content-Type','application/json; charset=utf-8')
+                ->withStatus(401);
         }
         
         $db = \DB::getConnection();

@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../src/Utils/db.php';
 
 
 use App\Modules\CourtsModule;
+use App\Middlewares\AuthMiddleware;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -20,7 +21,7 @@ $app->post('/court', [CourtsModule::class, 'createCourts']);
 $app->put('/court/{id}', [CourtsModule::class, 'editar']); 
 
 //DELETE elimina una cancha 
-$app->delete('/court/{id}', [CourtsModule::class, 'eliminar']); 
+$app->delete('/court/{id}', [CourtsModule::class, 'eliminar'])->add(new AuthMiddleware()); 
 
 
 //GET /{id} obtiene la informacion de cancha
