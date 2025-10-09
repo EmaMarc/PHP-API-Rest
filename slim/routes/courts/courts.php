@@ -15,10 +15,10 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 
 // POST crea una cancha
-$app->post('/court', [CourtsModule::class, 'createCourts']); 
+$app->post('/court', [CourtsModule::class, 'createCourts'])->add(new AuthMiddleware()); 
 
 //PUT edita una cancha
-$app->put('/court/{id}', [CourtsModule::class, 'editar']); 
+$app->put('/court/{id}', [CourtsModule::class, 'editar'])->add(new AuthMiddleware()); 
 
 //DELETE elimina una cancha 
 $app->delete('/court/{id}', [CourtsModule::class, 'eliminar'])->add(new AuthMiddleware()); 
