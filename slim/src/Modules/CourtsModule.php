@@ -196,7 +196,11 @@ final class CourtsModule{
             return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
         }
 
-        
+        if ($id<= 0) {
+            
+            $res->getBody()->write(json_encode(['error' => 'ID de cancha no es válido']));
+            return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
+        }
     
         try {
             // Conexión a la base de datos
