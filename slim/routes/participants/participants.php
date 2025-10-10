@@ -15,4 +15,4 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 
 // PUT /booking_participant/{id}:
-$app->put('/booking_participant/{id}', [ParticipantsModule::class, 'updateParticipant'])->add(new AuthMiddleware());
+$app->put('/booking_participant/{id}', [ParticipantsModule::class, 'updateParticipant']); //->add(new AuthMiddleware())
