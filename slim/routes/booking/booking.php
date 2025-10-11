@@ -12,7 +12,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 
 //POST crea una reserva
-$app->post('/booking', [BookingsModule::class, 'crearReserva']);
+$app->post('/booking', [BookingsModule::class, 'crearReserva'])->add(new AuthMiddleware());
 
 //DELETE elimina una reserva
 $app->delete('/booking/{id}', [BookingsModule::class, 'eliminar'])->add(new AuthMiddleware()); 

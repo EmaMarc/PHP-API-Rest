@@ -16,6 +16,15 @@ use DateTime; //para verificar que las fechas tengan un formato correcto
 
 
 final class BookingsModule{
+
+    //verifica si el usuario existe en la base de datos
+    private static function validarUsuario($id, $db) {
+        $stmt = $db->prepare("SELECT * FROM users WHERE id = ?");
+        $stmt->execute([$id]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $user ? true : false; //retorna true si el usuario existe, false si no
+    }
+
   
       //verifica si el nuevo participante puede participar en la reserva 
     private static function puedeParticipar($id, $dia_hora_reserva, $cant_bloques, $db) {
@@ -44,9 +53,22 @@ final class BookingsModule{
                                                 // si hay resultados false (no puede participar)
     }
 
+
+
     // POST /booking -------------------------------------------------------------------------------
     public static function crearReserva(Request $req, Response $res): Response {
         
+        $auth = $req->getAttribute('auth_user');
+
+        if (!$auth) {
+            $res->getBody()->write(json_encode(['error' => 'No autorizado']));
+            return  $res->withHeader('Content-Type','application/json; charset=utf-8')
+                ->withStatus(401);
+        }  
+
+        $id_creador = (int)$auth['id'] ?? 0; //id del usuario que crea la reserva (deberia venir del token)
+
+
         $body = $req->getBody();
         $data = json_decode($body, true); // true para que devuelva array asociativo
 
@@ -65,16 +87,22 @@ final class BookingsModule{
         //$fechaObj = new DateTime($dia_hora_reserva);//crea un objeto DateTime a partir de la cadena de fecha y hora
         
         //Intenta parsear el string $date según el formato 'Y-m-d', si no puede devuelve false
-        $fechaObj = DateTime::createFromFormat('Y-m-d', $dia_hora_reserva);
+        $fechaObj = DateTime::createFromFormat('Y-m-d H:i:s', $dia_hora_reserva);
         //$dateObj pordria devolver un obj por eso se chequea errores
-        $errors = DateTime::getLastErrors();//Recupera un array con información sobre la última operación de parseo
+        //$errors = DateTime::getLastErrors();//Recupera un array con información sobre la última operación de parseo
 
-        //si la cantidad de errores o advertencias es mayor a 0 o si no se pudo crear el objeto
-        if (!$fechaObj || $errors['warning_count'] > 0 || $errors['error_count'] > 0) {
+
+        if (!$fechaObj) {
+            // fecha mal formada
             $res->getBody()->write(json_encode(['error' => 'Fecha inválida o mal formada']));
             return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
         }
-
+        //avisa si hay errores o advertencias en el parseo
+        //$errors = DateTime::getLastErrors();
+        //if ($errors['warning_count'] > 0 || $errors['error_count'] > 0) {
+        //    $res->getBody()->write(json_encode(['error' => 'Fecha inválida o mal formada']));
+        //    return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
+        //}
     //verifica que la cantidad de bloques sea entre 1 y 6 
         if ($cant_bloques < 1 || $cant_bloques > 6) {
             $res->getBody()->write(json_encode(['error' => 'La cantidad de bloques debe ser entre 1 y 6']));
@@ -97,11 +125,14 @@ final class BookingsModule{
         $fechaObjFin = clone $fechaObj; // clonamos para no modificar la original
         $fechaObjFin->modify('+' . ($cant_bloques * 30) . ' minutes'); //le sumo la cantidad de bloques en minutos 
 
-        //si la hora de fin es mayor a 22 da error
-        if ((int)$fechaObjFin->format('H') > 22) {
-            $res->getBody()->write(json_encode(['error' => 'La reserva no puede terminar después de las 22']));
+        $horaFin = (int)$fechaObjFin->format('H');
+        $minFin = (int)$fechaObjFin->format('i');
+            
+        if ($horaFin > 22 || ($horaFin === 22 && $minFin > 0)) {
+            $res->getBody()->write(json_encode(['error' => 'La reserva no puede terminar después de las 22:00']));
             return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
         }
+
 
 
     // Verifico que la cancha esté disponible en el horario solicitado
@@ -112,7 +143,9 @@ final class BookingsModule{
             AND b.booking_datetime < ? 
             AND DATE_ADD(b.booking_datetime, INTERVAL b.duration_blocks * 30 MINUTE) > ?");  
 
-        $stmt->execute([$court_id, $fechaObjFin, $fechaObj]);
+        $stmt->execute([$court_id,$fechaObjFin->format('Y-m-d H:i:s'), $fechaObj->format('Y-m-d H:i:s')]);
+        //([$fechaObj->format('Y-m-d H:i:s')]); porque fechaObj es un objeto y hay que formatearlo a string
+
 
         // Si hay resultados, significa que ya tiene otra reserva en ese horario true (no puede participar)
         // Si no hay resultados, puede participar false
@@ -125,6 +158,122 @@ final class BookingsModule{
         }
 
 
+
+    //verifico si el creador puede participar en la reserva (si no tiene otra reserva que se cruce con la nueva)
+        if (empty($id_creador)) {//verifico que el id del creador venga en el token
+            $res->getBody()->write(json_encode(['error' => 'no se encontro el id del creador de la reserva']));
+            return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
+
+        }
+        if (!self::puedeParticipar($id_creador, $dia_hora_reserva, $cant_bloques, $db)) {
+            $res->getBody()->write(json_encode(['error' => 'El usuario creador ya tiene una reserva que se cruza con la nueva']));
+            return $res->withHeader('Content-Type', 'application/json')->withStatus(409);
+        }
+
+        //solo un participante es single (uno vs uno) recordar que el creador tambien es un participante
+        if (!empty($id_new_1) && empty($id_new_2) && empty($id_new_3)) {
+
+            //verifico que el id que se ingreso no sea el mismo que el del creador
+            if ($id_new_1 === $id_creador) {
+                $res->getBody()->write(json_encode(['error' => 'El participante 1 no puede ser el mismo que el creador de la reserva']));
+                return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
+            }
+
+            //si solo se paso un id de participante
+            if (!self::validarUsuario($id_new_1, $db)) {//self es parecido al this en java
+                $res->getBody()->write(json_encode(['error' => 'El usuario participante 1 no existe']));
+                return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
+            }
+
+            if (!self::puedeParticipar($id_new_1, $dia_hora_reserva, $cant_bloques, $db)) {
+                $res->getBody()->write(json_encode(['error' => 'El usuario participante 1 ya tiene una reserva que se cruza con la nueva']));
+                return $res->withHeader('Content-Type', 'application/json')->withStatus(409);
+            }
+
+            //creo la reserva   
+            $stmt = $db->prepare("INSERT INTO bookings (booking_datetime, duration_blocks, court_id, created_by) 
+                                  VALUES (?, ?, ?, ?)");
+            $stmt->execute([$dia_hora_reserva, $cant_bloques, $court_id, $id_creador]);
+            $id_denueva_reserva = $db->lastInsertId();
+
+            //creo la relacion entre la reserva creada y el usuario seloeccionado
+            $stmt = $db->prepare("INSERT INTO booking_participants (booking_id, user_id) 
+                                  VALUES (?, ?),
+                                         (?, ?)");
+            $stmt->execute([$id_denueva_reserva, $id_new_1,
+                            $id_denueva_reserva, $id_creador]);       
+
+            $res->getBody()->write(json_encode(['success' => 'Reserva creada con un participante', 'booking_id' => $id_denueva_reserva]));
+            return $res->withHeader('Content-Type', 'application/json')->withStatus(201);   
+            
+        }else{
+            //tres participantes dobles (dos vs dos)  recordar que el creador tambien es un participante
+            if (!empty($id_new_1) && !empty($id_new_2) && !empty($id_new_3)) {
+
+                //verifico que los id que se ingreso no sea el mismo que el del creador
+                if ($id_new_1 === $id_creador || $id_new_2 === $id_creador || $id_new_3 === $id_creador) {
+                    $res->getBody()->write(json_encode(['error' => 'El participante  no puede ser el mismo que el creador de la reserva']));
+                    return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
+                }
+                //verifico que los id que se ingreso no sean iguales entre si
+                if ($id_new_1 === $id_new_2 || $id_new_1 === $id_new_3 || $id_new_2 === $id_new_3) {
+                    $res->getBody()->write(json_encode(['error' => 'Los participantes no pueden ser el mismo usuario entre si']));
+                    return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
+                }
+
+                //si se pasaron los 3 id de participantes
+                if (!self::validarUsuario($id_new_1, $db)) {//self es parecido al this en java
+                    $res->getBody()->write(json_encode(['error' => 'El usuario participante 1 no existe']));
+                    return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
+                }
+                if (!self::validarUsuario($id_new_2, $db)) {//self es parecido al this en java
+                    $res->getBody()->write(json_encode(['error' => 'El usuario participante 2 no existe']));
+                    return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
+                }
+                if (!self::validarUsuario($id_new_3, $db)) {//self es parecido al this en java
+                    $res->getBody()->write(json_encode(['error' => 'El usuario participante 3 no existe']));
+                    return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
+                }
+
+                if (!self::puedeParticipar($id_new_1, $dia_hora_reserva, $cant_bloques, $db)) {
+                    $res->getBody()->write(json_encode(['error' => 'El usuario participante 1 ya tiene una reserva que se cruza con la nueva']));
+                    return $res->withHeader('Content-Type', 'application/json')->withStatus(409);
+                }
+                if (!self::puedeParticipar($id_new_2, $dia_hora_reserva, $cant_bloques, $db)) {
+                    $res->getBody()->write(json_encode(['error' => 'El usuario participante 2 ya tiene una reserva que se cruza con la nueva']));
+                    return $res->withHeader('Content-Type', 'application/json')->withStatus(409);
+                }
+                if (!self::puedeParticipar($id_new_3, $dia_hora_reserva, $cant_bloques, $db)) {
+                    $res->getBody()->write(json_encode(['error' => 'El usuario participante 3 ya tiene una reserva que se cruza con la nueva']));
+                    return $res->withHeader('Content-Type', 'application/json')->withStatus(409);
+                }
+
+                 //creo la reserva   
+                $stmt = $db->prepare("INSERT INTO bookings (booking_datetime, duration_blocks, court_id, created_by) 
+                                      VALUES (?, ?, ?, ?)");
+                $stmt->execute([$dia_hora_reserva, $cant_bloques, $court_id, $id_creador]);
+                $id_denueva_reserva = $db->lastInsertId();
+                
+                //creo la relacion entre la reserva creada y el usuario seloeccionado
+                //y tambien la relacion del creador con la reserva porque es un participante mas
+                $stmt = $db->prepare("INSERT INTO booking_participants (booking_id, user_id) 
+                                      VALUES (?, ?),
+                                             (?, ?),
+                                             (?, ?),
+                                             (?, ?)");
+                $stmt->execute([$id_denueva_reserva, $id_new_1,
+                                $id_denueva_reserva, $id_new_2,
+                                $id_denueva_reserva, $id_new_3,
+                                $id_denueva_reserva, $id_creador]);       
+                
+                $res->getBody()->write(json_encode(['success' => 'Reserva creada con un participante', 'booking_id' => $id_denueva_reserva]));
+                return $res->withHeader('Content-Type', 'application/json')->withStatus(201); 
+
+            }
+        }
+        //si no se cumple ninguna de las dos condiciones anteriores
+        $res->getBody()->write(json_encode(['error' => 'Debe ingresar un participante (1 vs 1) o tres participantes (2 vs 2)']));
+        return $res->withHeader('Content-Type', 'application/json')->withStatus(400);   
 
 
     }
