@@ -41,6 +41,14 @@ final class Authentication {
     return (int)($auth['id'] ?? 0) === $targetUserId; 
   }
 
+  public static function tienePermiso(array $auth, int $id): bool {
+    $id_actual = (int)($auth['id'] ?? 0);
+    $is_admin = (int)($auth['is_admin'] ?? 0);
+
+    //devuelve true si es admin o si el id actual es igual al id pasado
+    return $is_admin === 1 || $id_actual === $id;
+  }
+
   public static function isAdmin(array $auth): bool {
     // Admin
     return (int)($auth['is_admin'] ?? 0) === 1;

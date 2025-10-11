@@ -6,12 +6,16 @@ require_once __DIR__ . '/../../src/Utils/db.php';
 
 
 use App\Modules\BookingsModule;
+use App\Middlewares\AuthMiddleware;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
 
+//POST crea una reserva
+$app->post('/booking', [BookingsModule::class, 'crearReserva']);
+
 //DELETE elimina una reserva
-$app->delete('/booking/{id}', [BookingsModule::class, 'eliminar']); 
+$app->delete('/booking/{id}', [BookingsModule::class, 'eliminar'])->add(new AuthMiddleware()); 
 
 
 //GET muestras las reservas de un dia    /bookings?date=2025-10-06

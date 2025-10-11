@@ -4,6 +4,7 @@
 namespace App\Modules;
 
 require_once __DIR__ . '/../Utils/db.php';
+require_once __DIR__ . '/../Utils/Authentication.php';
 
 
 
@@ -35,14 +36,13 @@ final class ParticipantsModule{
     $fin_reserva = date('Y-m-d H:i:s', strtotime($dia_hora_reserva) + ($cant_bloques * 30 * 60)); 
 
     // Verifico si el usuario ya tiene una reserva que se cruce con la nueva
-    $stmt = $db->prepare("
-        SELECT u.* 
-        FROM users u
-        INNER JOIN booking_participants part ON u.id = part.user_id
-        INNER JOIN bookings b ON part.booking_id = b.id
-        WHERE u.id = ?
-        AND b.booking_datetime < ? 
-        AND DATE_ADD(b.booking_datetime, INTERVAL b.duration_blocks * 30 MINUTE) > ?");  
+    $stmt = $db->prepare("SELECT u.* 
+                          FROM users u
+                          INNER JOIN booking_participants part ON u.id = part.user_id
+                          INNER JOIN bookings b ON part.booking_id = b.id
+                          WHERE u.id = ?
+                          AND b.booking_datetime < ? 
+                          AND DATE_ADD(b.booking_datetime, INTERVAL b.duration_blocks * 30 MINUTE) > ?");  
 
     $stmt->execute([$id, $fin_reserva, $dia_hora_reserva]);
 
@@ -88,7 +88,19 @@ final class ParticipantsModule{
     
 
     //aca deberia de verificar el usuario que hace la peticion es admin o es el mismo usuario  que creo la reserva 
-    //finjo demencia y no lo hago
+    $auth = $req->getAttribute('auth_user');
+    //pregunto si esta autorizado y le paso auth y id del usuario a modificar
+    if (!\Authentication::tienePermiso($auth, $id_creador_reserva)) {
+        $res->getBody()->write(json_encode(['error' => 'Usuario No autorizado']));
+        return  $res->withHeader('Content-Type','application/json; charset=utf-8')
+            ->withStatus(401);
+    }/*else{ //para probar
+        $res->getBody()->write(json_encode(['ok' => 'Usuario autorizado']));
+        return  $res->withHeader('Content-Type','application/json; charset=utf-8')
+            ->withStatus(200);
+    }*/
+
+
 
     //tomo los id de los nuevos participantes y de los que quiero eliminar desde el body
     $body = $req->getBody();
