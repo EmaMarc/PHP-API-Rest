@@ -17,7 +17,9 @@ use PDO;
 
 final class CourtsModule{
 
+    
 
+    // POST /court -----------------------------------------------------------------------------------------------
     public static function createCourts(Request $req, Response $res): Response {
 
         // is_admin desde el token (validado por el middleware)
@@ -63,6 +65,7 @@ final class CourtsModule{
         }
     }
 
+    // PUT /court/{id} -----------------------------------------------------------------------------------------------
     public static function editar(Request $req, Response $res, array $args): Response{
         $id = (int)($args['id']);//id desde la ruta y verifica que sea un nro
 
@@ -138,7 +141,7 @@ final class CourtsModule{
 
     }
 
-
+    // DELETE /court/{id} -----------------------------------------------------------------------------------------------
     public static function eliminar(Request $req, Response $res, array $args): Response {
         $id = (int)($args['id']);
         
@@ -184,6 +187,8 @@ final class CourtsModule{
         }
     }
 
+
+    // GET /court/{id} -----------------------------------------------------------------------------------------------
     public static function getCourtsById(Request $req, Response $res, array $args): Response {
         // PHP controla que devuelva un objeto Response
         $id = (int)($args['id']);//id desde la ruta y verifica que sea un nro
