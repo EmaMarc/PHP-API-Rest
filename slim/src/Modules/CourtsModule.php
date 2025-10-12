@@ -44,6 +44,9 @@ final class CourtsModule{
 
         $db = \DB::getConnection();
 
+        //si el token es valido, refresco su expiración
+        \Authentication::refreshToken($db, $auth['id'], 300);
+
         //  Verifico si ya existe una cancha con ese nombre
         $stmt = $db->prepare("SELECT * FROM courts WHERE name = ?");
         $stmt->execute([$name]);
@@ -85,6 +88,9 @@ final class CourtsModule{
         }
 
         $db = \DB::getConnection();
+
+        //si el token es valido, refresco su expiración
+        \Authentication::refreshToken($db, $auth['id'], 300);
 
         //  Verifico si ya existe una cancha con ese id
         $stmt = $db->prepare("SELECT * FROM courts WHERE id = ?");
@@ -164,6 +170,9 @@ final class CourtsModule{
         }
         
         $db = \DB::getConnection();
+
+        //si el token es valido, refresco su expiración
+        \Authentication::refreshToken($db, $auth['id'], 300);
         
         //busco si tiene reservas
         $stmt = $db->prepare("SELECT * FROM bookings WHERE court_id = ? ");

@@ -111,6 +111,10 @@ final class BookingsModule{
 
     //verifica que la cancha elegida exista
         $db = \DB::getConnection();
+        //si el token es valido, refresco su expiración
+        \Authentication::refreshToken($db, $auth['id'], 300);
+
+
         $stmt = $db->prepare("SELECT * FROM courts WHERE id = ?");
         $stmt->execute([$court_id]);
         $court = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -289,8 +293,12 @@ final class BookingsModule{
             $res->getBody()->write(json_encode(['error' => 'Falta el ID de la reserva']));
             return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
         }
+        
+        
 
         $db = \DB::getConnection();
+
+        
 
         //verifico si la reserva existe 
         $sql = $db->prepare ("SELECT * FROM bookings 
@@ -301,8 +309,7 @@ final class BookingsModule{
 
         //me quedo con el id del creador de la reserva
         $id_creador = $row[0]['created_by'] ?? 0;
-
-    //aca vefifico solo lo el creador de la reserva puede eliminarla o el admin
+        //aca verifico solo lo el creador de la reserva puede eliminarla o el admin
         // is_admin desde el token (validado por el middleware)
         $auth = $req->getAttribute('auth_user');
         //pregunto si esta autorizado y le paso auth y id del usuario a modificar
@@ -310,11 +317,15 @@ final class BookingsModule{
             $res->getBody()->write(json_encode(['error' => 'Usuario No autorizado']));
             return  $res->withHeader('Content-Type','application/json; charset=utf-8')
                 ->withStatus(401);
-        }/*else{ //para probar
+        }
+        /*else{ //para probar
             $res->getBody()->write(json_encode(['ok' => 'Usuario autorizado']));
             return  $res->withHeader('Content-Type','application/json; charset=utf-8')
                 ->withStatus(200);
         }*/
+
+        //si el token es valido, refresco su expiración
+        \Authentication::refreshToken($db, $auth['id'], 300);
 
         if (!empty($row)){ //la reserva existe 
 

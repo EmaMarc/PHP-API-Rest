@@ -70,6 +70,7 @@ final class ParticipantsModule{
 
     $db = \DB::getConnection();//conexion a la db
 
+
     //verifico si la reserva existe
     $stmt = $db->prepare("SELECT * FROM bookings WHERE id = ?");
     $stmt->execute([$bookingId]);
@@ -99,6 +100,9 @@ final class ParticipantsModule{
         return  $res->withHeader('Content-Type','application/json; charset=utf-8')
             ->withStatus(200);
     }*/
+
+    //si el token es valido, refresco su expiración
+    \Authentication::refreshToken($db, $auth['id'], 300);
 
 
 

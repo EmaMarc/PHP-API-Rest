@@ -24,6 +24,7 @@ final class Authentication {
 
   // Solo refresca la expiración usando la hora de la BD
   public static function refreshToken(\PDO $db, int $userId, int $ttlSeconds = 300): bool {
+    $db = \DB::getConnection();
     //Lo extiendo 300 segs
     $sql = "UPDATE users
             SET expired = DATE_ADD(NOW(), INTERVAL {$ttlSeconds} SECOND)
