@@ -270,7 +270,7 @@ final class BookingsModule{
                                 $id_denueva_reserva, $id_new_3,
                                 $id_denueva_reserva, $id_creador]);       
                 
-                $res->getBody()->write(json_encode(['success' => 'Reserva creada con un participante', 'booking_id' => $id_denueva_reserva]));
+                $res->getBody()->write(json_encode(['success' => 'Reserva creada con 3 participante']));
                 return $res->withHeader('Content-Type', 'application/json')->withStatus(201); 
 
             }
@@ -370,10 +370,11 @@ final class BookingsModule{
         //Intenta parsear el string $date según el formato 'Y-m-d', si no puede devuelve false
         $dateObj = DateTime::createFromFormat('Y-m-d', $date);
         //$dateObj pordria devolver un obj por eso se chequea errores
-        $errors = DateTime::getLastErrors();//Recupera un array con información sobre la última operación de parseo
+        $errors = DateTime::getLastErrors() ?: ['warning_count' => 0, 'error_count' => 0];//si es null asigna un array vacio
 
-        //si la cantidad de errores o advertencias es mayor a 0 o si no se pudo crear el objeto
+        //si no pude crar el obnjeto fecha o si hubo errores o advertencias  
         if (!$dateObj || $errors['warning_count'] > 0 || $errors['error_count'] > 0) {
+
             $res->getBody()->write(json_encode(['error' => 'Fecha inválida o mal formada']));
             return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
         }
@@ -389,14 +390,15 @@ final class BookingsModule{
         $sql->execute([$date]); //retorna F o V
         $row = $sql->fetchAll(PDO::FETCH_ASSOC); //devuelve todos los resultados
 
-        if (!empty($row)){
+        if (!($row)){
+            $res->getBody()->write(json_encode(['error' => 'No se encontró reservas para ese dia']));
+            return $res->withHeader('Content-Type', 'application/json')->withStatus(404);
+
+        }else{
+            
             //devuelve las reservas encontradas de ese dia 
             $res->getBody()->write(json_encode($row));
             return $res->withHeader('Content-Type', 'application/json')->withStatus(200);
-
-        }else{
-            $res->getBody()->write(json_encode(['error' => 'No se encontró reservas para ese dia']));
-                return $res->withHeader('Content-Type', 'application/json')->withStatus(404);
         }
         
         

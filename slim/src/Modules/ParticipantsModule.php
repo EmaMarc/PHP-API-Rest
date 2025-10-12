@@ -131,7 +131,7 @@ final class ParticipantsModule{
 
 
 
-    if (($cant_part)==1){//si es uno vs uno, solo puede agregar un participante y eliminar otro
+    if (($cant_part)===1){//si es uno vs uno, solo puede agregar un participante y eliminar otro
       
       //agrega 3 participantes nuevos y elimina el participante que esta -- pasa a ser dos vs dos
       
@@ -230,8 +230,8 @@ final class ParticipantsModule{
         return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(200);
 
       }
-    }else{
-       if (($cant_part)==3){//si es dos vs dos, puede agregar un participante y eliminar hasta dos
+    }
+    if (($cant_part)===3){//si es dos vs dos, puede agregar un participante y eliminar hasta dos
         
         //agrega tres participantes nuevos y elimina los tres participantes que estan -- sigue siendo dos vs dos
         if(!empty($id_new_1) && !empty($id_new_2) && !empty($id_new_3) && !empty($id_del_1) && !empty($id_del_2) && !empty($id_del_3)){
@@ -332,5 +332,4 @@ final class ParticipantsModule{
 
 
    }
-  }
 }
