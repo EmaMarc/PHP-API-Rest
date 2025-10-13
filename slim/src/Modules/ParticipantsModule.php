@@ -128,15 +128,297 @@ final class ParticipantsModule{
     $id_del_3 = (int)$data['del_participants_3'] ?? '' ;//id del participante a eliminar 3
 
     
-
-
-
-    if (($cant_part)===1){//si es uno vs uno, solo puede agregar un participante y eliminar otro
+    //no importa si es uno vs uno o dos vs dos, ambos podrian agrear un participante y eliminar otro
+    if ((!empty($id_new_1) && empty($id_new_2) && empty($id_new_3) )&& (!empty($id_del_1) && empty($id_del_2) && empty($id_del_3))) {
       
-      //agrega 3 participantes nuevos y elimina el participante que esta -- pasa a ser dos vs dos
+
+      //verifico que el nuevo participante este en la base de datos
+      $stmt = $db->prepare("SELECT COUNT(*) as total FROM users WHERE id = ?");
+      $stmt->execute([$id_new_1]);  
+      $row = $stmt->fetch(PDO::FETCH_ASSOC);
+      if ((int)$row['total'] != 1) { //deberia ser 1
+            $res->getBody()->write(json_encode(['error' => 'El nuevo participante no existe']));
+            return $res->withHeader('Content-Type','application/json; charset=utf -8')->withStatus(400); 
+      }
       
-      //verifico que los nuevos participantes no esten ya en la reserva y que los participantes a eliminar esten en la reserva
-      if (!empty($id_new_1) && !empty($id_new_2) && !empty($id_new_3) && !empty($id_del_1)&& !empty($id_del_2) && !empty($id_del_3)) {
+      //verifico que el nuevo participante no este ya en la reserva
+      if (ParticipantsModule::estaEnLaReserva($bookingId, $id_new_1, $db)) {
+            $res->getBody()->write(json_encode(['error' => 'El nuevo participante ya está en la reserva']));
+            return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
+      }
+
+      //verifico que el participante a eliminar no sea el creador de la reserva
+      if ($id_del_1 === $id_creador_reserva) {  
+            $res->getBody()->write(json_encode(['error' => 'No se puede eliminar al creador de la reserva']));
+            return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
+      } 
+
+
+      //verifico que el participante a eliminar este en la reserva
+      if (!ParticipantsModule::estaEnLaReserva($bookingId, $id_del_1, $db)) {
+            $res->getBody()->write(json_encode(['error' => 'El participante a eliminar no está en la reserva']));
+            return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
+      } 
+
+      //verifico que el nuevo participante pueda participar
+      if (!ParticipantsModule::puedeParticipar($id_new_1, $dia_hora_reserva, $duracion_reserva, $db)) {
+            $res->getBody()->write(json_encode(['error' => 'El nuevo participante no puede participar en la reserva']));
+            return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400);
+
+      }
+
+      //si paso todas las verificaciones, agrego el nuevo participante
+
+      /* preguntar para este caso cual es mejor, si hacer un update o un insert y un delete
+
+      $insert = $db->prepare("UPDATE booking_participants
+                              SET user_id = ?
+                              WHERE booking_id = ? AND user_id = ?");
+      $insert->execute([$id_new_1, $bookingId, $id_del_1]);
+      */
+
+
+      $insert = $db->prepare("INSERT INTO booking_participants (booking_id, user_id) VALUES (?, ?)");
+      $insert->execute([$bookingId, $id_new_1]);  
+
+      //elimino el participante
+      $delete = $db->prepare("DELETE FROM booking_participants WHERE booking_id = ? AND user_id = ?");
+      $delete->execute([$bookingId, $id_del_1]);  
+
+      $res->getBody()->write(json_encode(['success' => 'Participantes actualizado correctamente']));
+      return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(200); 
+
+
+    }
+
+
+    // si la reserva es  uno vs uno,
+    if(($cant_part) == 2){
+      //dos casos posibles para pasar de uno vs uno a dos vs dos
+
+      //1- agregar dos participante (sin eliminar a nadie) -agrega a dos participantes--------------------------------------------------------------------------
+
+      if((!empty($id_new_1) && !empty($id_new_2) && empty($id_new_3) )&& (empty($id_del_1) && empty($id_del_2) && empty($id_del_3))) {
+        
+        //verifico que los nuevos participantes sean no sean iguales entre si
+        if ($id_new_1 === $id_new_2) {
+            $res->getBody()->write(json_encode(['error' => 'Los nuevos participantes no pueden ser iguales entre sí']));
+            return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
+        }
+
+        //verifico que los nuevos participantes estes en la base de datos
+        $stmt = $db->prepare("SELECT COUNT(*) as total FROM users WHERE id IN (?, ?)");
+        $stmt->execute([$id_new_1, $id_new_2]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ((int)$row['total'] != 2) { //deberian ser 2
+            $res->getBody()->write(json_encode(['error' => 'Alguno de los nuevos participantes no existe']));
+            return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
+        }
+
+        //verifico que los nuevos participantes no esten ya en la reserva
+        if (ParticipantsModule::estaEnLaReserva($bookingId, $id_new_1, $db) || ParticipantsModule::estaEnLaReserva($bookingId, $id_new_2, $db)) {
+            $res->getBody()->write(json_encode(['error' => 'Alguno de los nuevos participantes ya está en la reserva']));
+            return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
+        }
+        //verifico que los nuevos participantes puedan participar
+        if (!ParticipantsModule::puedeParticipar($id_new_1, $dia_hora_reserva, $duracion_reserva, $db) || 
+            !ParticipantsModule::puedeParticipar($id_new_2, $dia_hora_reserva, $duracion_reserva, $db)) {
+            $res->getBody()->write(json_encode(['error' => 'Alguno de los nuevos participantes no puede participar porque ya tinen una reserva ']));
+            return $res->withHeader ('Content-Type','application/json; charset=utf-8')->withStatus(400);  
+        }
+
+        //si paso todas las verificaciones, agrego los nuevos participantes
+        $insert = $db->prepare("INSERT INTO booking_participants (booking_id, user_id) VALUES (?, ?)");
+        $insert->execute([$bookingId, $id_new_1]);  
+        $insert->execute([$bookingId, $id_new_2]);  
+
+        //informo que fue exitoso
+        $res->getBody()->write(json_encode(['success' => 'Participantes agregados correctamente']));
+        return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(200); 
+  
+      }
+
+      //2-agregar 3 participantes y eliminar 1 (pasa de uno vs uno a dos vs dos)--------------------------------------------------------------------------------
+      if((!empty($id_new_1) && !empty($id_new_2) && !empty($id_new_3) )&& (!empty($id_del_1) && empty($id_del_2) && empty($id_del_3))) {
+        
+        //verifico que los nuevos participantes sean no sean iguales entre si
+        if ($id_new_1 === $id_new_2 || $id_new_1 === $id_new_3 || $id_new_2 === $id_new_3) {
+            $res->getBody()->write(json_encode(['error' => 'Los nuevos participantes no pueden ser iguales entre sí']));
+            return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
+        }
+
+        //verifico que los nuevos participantes estes en la base de datos
+        $stmt = $db->prepare("SELECT COUNT(*) as total FROM users WHERE id IN (?, ?, ?)");
+        $stmt->execute([$id_new_1, $id_new_2, $id_new_3]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ((int)$row['total'] != 3) { //deberian ser 3
+            $res->getBody()->write(json_encode(['error' => 'Alguno de los nuevos participantes no existe']));
+            return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
+        }
+
+        //verifico que los nuevos participantes no esten ya en la reserva
+        if (ParticipantsModule::estaEnLaReserva($bookingId, $id_new_1, $db) || 
+            ParticipantsModule::estaEnLaReserva($bookingId, $id_new_2, $db) || 
+            ParticipantsModule::estaEnLaReserva($bookingId, $id_new_3, $db)) {
+
+            $res->getBody()->write(json_encode(['error' => 'Alguno de los nuevos participantes ya está en la reserva']));
+            return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
+        }
+        //verifico que el participante a eliminar no sea el creador de la reserva
+        if ($id_del_1 === $id_creador_reserva) {  
+            $res->getBody()->write(json_encode(['error' => 'No se puede eliminar al creador de la reserva']));
+            return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
+        }
+
+        //verifico que el participante a eliminar este en la reserva
+        if (!ParticipantsModule::estaEnLaReserva($bookingId, $id_del_1, $db)) {
+            $res->getBody()->write(json_encode(['error' => 'El participante a eliminar no está en la reserva']));
+            return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
+        } 
+
+        //verifico que los nuevos participantes puedan participar
+        if (!ParticipantsModule::puedeParticipar($id_new_1, $dia_hora_reserva, $duracion_reserva, $db) ||
+           !ParticipantsModule::puedeParticipar($id_new_2, $dia_hora_reserva, $duracion_reserva  , $db) ||
+            !ParticipantsModule::puedeParticipar($id_new_3, $dia_hora_reserva, $duracion_reserva, $db)) {
+            $res->getBody()->write(json_encode(['error' => 'Alguno de los nuevos participantes no puede participar porque ya tinen una reserva ']));
+            return $res->withHeader ('Content-Type','application/json; charset=utf-8')->withStatus(400);  
+        } 
+
+        //si paso todas las verificaciones, agrego los nuevos participantes
+        $insert = $db->prepare("INSERT INTO booking_participants (booking_id, user_id) VALUES (?, ?)");
+        $insert->execute([$bookingId, $id_new_1]);  
+        $insert->execute([$bookingId, $id_new_2]);  
+        $insert->execute([$bookingId, $id_new_3]);
+
+        //elimino el participante
+        $delete = $db->prepare("DELETE FROM booking_participants WHERE booking_id = ? AND user_id = ?");
+        $delete->execute([$bookingId, $id_del_1]);  
+
+        //informo que fue exitoso
+        $res->getBody()->write(json_encode(['success' => 'Participantes actualizado correctamente']));
+        return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(200); 
+
+      }
+    }
+
+    // si la reserva es  dos vs dos,
+    if(($cant_part == 4)){
+      //unico caso de pasar a uno vs uno
+      //eliminar dos participantes (sin agregar a nadie) -pasa de dos vs dos a uno vs uno--------------------------------------------------------------------------
+      if((empty($id_new_1) && empty($id_new_2) && empty($id_new_3) )&& (!empty($id_del_1) && !empty($id_del_2) && empty($id_del_3))) {
+        
+        //verifico que los participantes a eliminar no sean iguales entre si
+        if ($id_del_1 === $id_del_2) {
+            $res->getBody()->write(json_encode(['error' => 'Los participantes a eliminar no pueden ser iguales entre sí']));
+            return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
+        }
+
+        //verifico que los participantes a eliminar no sean el creador de la reserva
+        if ($id_del_1 === $id_creador_reserva || $id_del_2 === $id_creador_reserva) {  
+            $res->getBody()->write(json_encode(['error' => 'No se puede eliminar al creador de la reserva']));
+            return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
+        } 
+
+        //verifico que los participantes a eliminar esten en la reserva
+        if (!ParticipantsModule::estaEnLaReserva($bookingId, $id_del_1, $db) || 
+            !ParticipantsModule::estaEnLaReserva($bookingId, $id_del_2, $db)) {
+            $res->getBody()->write(json_encode(['error' => 'Alguno de los participantes a eliminar no está en la reserva']));
+            return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
+        } 
+
+        //si paso todas las verificaciones, elimino los participantes
+        $delete = $db->prepare("DELETE FROM booking_participants WHERE booking_id = ? AND user_id = ?");
+        $delete->execute([$bookingId, $id_del_1]);  
+        $delete->execute([$bookingId, $id_del_2]);  
+
+        //informo que fue exitoso
+        $res->getBody()->write(json_encode(['success' => 'Participantes eliminados correctamente']));
+        return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(200); 
+  
+      }
+
+
+
+      //dos casos para mantener dos vs dos
+     //elimina dos y agrega dos -sigue dos vs dos-------------------------------------------------------------------------------------------------------------------
+      if ((!empty($id_new_1) && !empty($id_new_2) && empty($id_new_3) )&& (!empty($id_del_1) && !empty($id_del_2) && empty($id_del_3))){
+        
+        //verifico que los nuevos participantes sean no sean iguales entre si
+        if ($id_new_1 === $id_new_2) {
+            $res->getBody()->write(json_encode(['error' => 'Los nuevos participantes no pueden ser iguales entre sí']));
+            return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
+        }
+
+        //verifico que los participantes a eliminar no sean iguales entre si
+        if ($id_del_1 === $id_del_2) {
+            $res->getBody()->write(json_encode(['error' => 'Los participantes a eliminar no pueden ser iguales entre sí']));
+            return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
+        }
+
+        //verifico que los nuevos participantes estes en la base de datos
+        $stmt = $db->prepare("SELECT COUNT(*) as total FROM users WHERE id IN (?, ?)");
+        $stmt->execute([$id_new_1, $id_new_2]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ((int)$row['total'] != 2) { //deberian ser 2
+            $res->getBody()->write(json_encode(['error' => 'Alguno de los nuevos participantes no existe']));
+            return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
+        }
+
+        //verifico que los nuevos participantes no esten ya en la reserva
+        if (ParticipantsModule::estaEnLaReserva($bookingId, $id_new_1, $db) || ParticipantsModule::estaEnLaReserva($bookingId, $id_new_2, $db)) {
+            $res->getBody()->write(json_encode(['error' => 'Alguno de los nuevos participantes ya está en la reserva']));
+            return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
+        }
+        //verifico que los nuevos participantes puedan participar
+        if (!ParticipantsModule::puedeParticipar($id_new_1, $dia_hora_reserva, $duracion_reserva, $db) || 
+            !ParticipantsModule::puedeParticipar($id_new_2, $dia_hora_reserva, $duracion_reserva, $db)) {
+            $res->getBody()->write(json_encode(['error' => 'Alguno de los nuevos participantes no puede participar porque ya tinen una reserva ']));
+            return $res->withHeader ('Content-Type','application/json; charset=utf-8')->withStatus(400);  
+        } 
+
+        //verifico que los participantes a eliminar no sean el creador de la reserva
+        if ($id_del_1 === $id_creador_reserva || $id_del_2 === $id_creador_reserva) {  
+            $res->getBody()->write(json_encode(['error' => 'No se puede eliminar al creador de la reserva']));
+            return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
+        } 
+
+        //verifico que los participantes a eliminar esten en la reserva
+        if (!ParticipantsModule::estaEnLaReserva($bookingId, $id_del_1, $db) || 
+            !ParticipantsModule::estaEnLaReserva($bookingId, $id_del_2, $db)) {
+            $res->getBody()->write(json_encode(['error' => 'Alguno de los participantes a eliminar no está en la reserva']));
+            return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
+        }   
+
+        //si paso todas las verificaciones, agrego los nuevos participantes
+        $insert = $db->prepare("INSERT INTO booking_participants (booking_id, user_id) VALUES (?, ?)");
+        $insert->execute([$bookingId, $id_new_1 ]);  
+        $insert->execute([$bookingId, $id_new_2]);  
+
+        //elimino los participantes 
+        $delete = $db->prepare("DELETE FROM booking_participants WHERE booking_id = ? AND user_id = ?");
+        $delete->execute([$bookingId, $id_del_1]);  
+        $delete->execute([$bookingId, $id_del_2]);    
+
+        $res->getBody()->write(json_encode(['success' => 'Participantes actualizado correctamente']));  
+        return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(200); 
+
+      }
+
+      //elimina 3 y agrega 3  -sigue dos vs dos --------------------------------------------------------------------------------------------------------------------
+      if(!empty($id_new_1) && !empty($id_new_2) && !empty($id_new_3) && !empty($id_del_1) && !empty($id_del_2) && !empty($id_del_3)){
+
+        //verifico que los nuevos participantes sean no sean iguales entre si
+        if ($id_new_1 === $id_new_2 || $id_new_1 === $id_new_3 || $id_new_2 === $id_new_3) {
+            $res->getBody()->write(json_encode(['error' => 'Los nuevos participantes no pueden ser iguales entre sí']));
+            return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
+        }
+
+        //verifico que los participantes a eliminar no sean iguales estre si
+        if ($id_del_1 === $id_del_2 || $id_del_1 === $id_del_3 || $id_del_2 === $id_del_3) {
+            $res->getBody()->write(json_encode(['error' => 'Los participantes a eliminar no pueden ser iguales entre sí']));
+            return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
+        }
+
         //verifico que los nuevos participantes no esten ya en la reserva
         if (ParticipantsModule::estaEnLaReserva($bookingId, $id_new_1, $db) ||
             ParticipantsModule::estaEnLaReserva($bookingId, $id_new_2, $db) ||
@@ -144,192 +426,52 @@ final class ParticipantsModule{
               $res->getBody()->write(json_encode(['error' => 'Alguno de los nuevos participantes ya está en la reserva']));
               return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
         }
-        //verifico que el participante a eliminar este en la reserva
-        if (!ParticipantsModule::estaEnLaReserva($bookingId, $id_del_1, $db)) {
-              $res->getBody()->write(json_encode(['error' => 'El participante a eliminar no está en la reserva']));
+
+        //verifico que los participantes a eliminar esten en la reserva
+        if (!ParticipantsModule::estaEnLaReserva($bookingId, $id_del_1, $db) ||
+            !ParticipantsModule::estaEnLaReserva($bookingId, $id_del_2, $db) ||
+            !ParticipantsModule::estaEnLaReserva($bookingId, $id_del_3, $db)) {
+              $res->getBody()->write(json_encode(['error' => 'Alguno de los participantes a eliminar no está en la reserva']));
               return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
         }
 
+        //verifico que los participantes a eliminar no sean el creador de la reserva
+        if ($id_del_1 === $id_creador_reserva || $id_del_2 === $id_creador_reserva || $id_del_3 === $id_creador_reserva) {  
+              $res->getBody()->write(json_encode(['error' => 'No se puede eliminar al creador de la reserva']));
+              return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
+        }
+
+        //verifico que los nuevos participantes puedan participar
         if (!ParticipantsModule::puedeParticipar($id_new_1, $dia_hora_reserva, $duracion_reserva, $db) ||
             !ParticipantsModule::puedeParticipar($id_new_2, $dia_hora_reserva, $duracion_reserva, $db) ||
             !ParticipantsModule::puedeParticipar($id_new_3, $dia_hora_reserva, $duracion_reserva, $db)) {
               $res->getBody()->write(json_encode(['error' => 'Alguno de los nuevos participantes no puede participar en la reserva']));
               return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400);
-
         }
 
+        //si paso todas las verificaciones,
         //agrego los nuevos participantes
         $insert = $db->prepare("INSERT INTO booking_participants (booking_id, user_id) VALUES (?, ?), (?, ?), (?, ?)");
         $insert->execute([$bookingId, $id_new_1, $bookingId, $id_new_2, $bookingId, $id_new_3]);
-
-        //elimino el participante
-        $delete = $db->prepare("DELETE FROM booking_participants WHERE booking_id = ? AND user_id = ?");
-        $delete->execute([$bookingId, $id_del_1]);
-
-        $res->getBody()->write(json_encode(['success' => 'Participantes actualizados correctamente']));
-        return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(200); 
-
-      }
-
-      //agrega dos participantes nuevos y mantiene el participante que esta -- pasa a ser dos vs dos
-      
-
-      if (!empty($id_new_1) && !empty($id_new_2) && empty($id_new_3) && empty($id_del_1) && empty($id_del_2) && empty($id_del_3)) {
-        //verifico que los nuevos participantes no esten ya en la reserva
-        if (ParticipantsModule::estaEnLaReserva($bookingId, $id_new_1, $db) ||
-            ParticipantsModule::estaEnLaReserva($bookingId, $id_new_2, $db)) {
-              $res->getBody()->write(json_encode(['error' => 'Alguno de los nuevos participantes ya está en la reserva']));
-              return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
-        }
-        //verifico que los participante puedan participar
-        if (!ParticipantsModule::puedeParticipar($id_new_1, $dia_hora_reserva, $duracion_reserva, $db) ||
-            !ParticipantsModule::puedeParticipar($id_new_2, $dia_hora_reserva, $duracion_reserva, $db)) {
-              $res->getBody()->write(json_encode(['error' => 'Alguno de los nuevos participantes no puede participar en la reserva']));
-              return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400);
-
-        }
-
-        //agrego los nuevos participantes
-        $insert = $db->prepare("INSERT INTO booking_participants (booking_id, user_id) VALUES (?, ?), (?, ?)");
-        $insert->execute([$bookingId, $id_new_1, $bookingId, $id_new_2]);
+        //elimino los participantes
+        $delete = $db->prepare("DELETE FROM booking_participants WHERE booking_id = ? AND user_id IN (?, ?, ?)");
+        $delete->execute([$bookingId, $id_del_1, $id_del_2, $id_del_3]);  
 
         $res->getBody()->write(json_encode(['success' => 'Participantes actualizados correctamente']));
-        return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(200);
-
-      }
-
-      //agrega un participante nuevo y elimina el participante que esta -- sigue siendo uno vs uno
-      
-      if ((!empty($id_new_1) && empty($id_new_2) && empty($id_new_3) )&& (!empty($id_del_1) && empty($id_del_2) && empty($id_del_3))) {
-        //verifico que el nuevo participante no este ya en la reserva
-        if (ParticipantsModule::estaEnLaReserva($bookingId, $id_new_1, $db)) {
-              $res->getBody()->write(json_encode(['error' => 'El nuevo participante ya está en la reserva']));
-              return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
-        }
-        //verifico que el participante a eliminar este en la reserva
-        if (!ParticipantsModule::estaEnLaReserva($bookingId, $id_del_1, $db)) {
-              $res->getBody()->write(json_encode(['error' => 'El participante a eliminar no está en la reserva']));
-              return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
-        }
-
-        if (!ParticipantsModule::puedeParticipar($id_new_1, $dia_hora_reserva, $duracion_reserva, $db)) {
-              $res->getBody()->write(json_encode(['error' => 'El nuevo participante no puede participar en la reserva']));
-              return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400);
-
-        }
-
-        //agrego el nuevo participante
-        $insert = $db->prepare("INSERT INTO booking_participants (booking_id, user_id) VALUES (?, ?)");
-        $insert->execute([$bookingId, $id_new_1]);
-
-        //elimino el participante
-        $delete = $db->prepare("DELETE FROM booking_participants WHERE booking_id = ? AND user_id = ?");
-        $delete->execute([$bookingId, $id_del_1]);
-
-        $res->getBody()->write(json_encode(['success' => 'Participantes actualizados correctamente']));
-        return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(200);
-
-      }
-    }
-    if (($cant_part)===3){//si es dos vs dos, puede agregar un participante y eliminar hasta dos
-        
-        //agrega tres participantes nuevos y elimina los tres participantes que estan -- sigue siendo dos vs dos
-        if(!empty($id_new_1) && !empty($id_new_2) && !empty($id_new_3) && !empty($id_del_1) && !empty($id_del_2) && !empty($id_del_3)){
-
-          //verifico que los nuevos participantes no esten ya en la reserva
-          if (ParticipantsModule::estaEnLaReserva($bookingId, $id_new_1, $db) ||
-              ParticipantsModule::estaEnLaReserva($bookingId, $id_new_2, $db) ||
-              ParticipantsModule::estaEnLaReserva($bookingId, $id_new_3, $db)) {
-                $res->getBody()->write(json_encode(['error' => 'Alguno de los nuevos participantes ya está en la reserva']));
-                return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
-          }
-
-          //verifico que los participantes a eliminar esten en la reserva
-          if (!ParticipantsModule::estaEnLaReserva($bookingId, $id_del_1, $db) ||
-              !ParticipantsModule::estaEnLaReserva($bookingId, $id_del_2, $db) ||
-              !ParticipantsModule::estaEnLaReserva($bookingId, $id_del_3, $db)) {
-                $res->getBody()->write(json_encode(['error' => 'Alguno de los participantes a eliminar no está en la reserva']));
-                return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
-          }
-
-          if (!ParticipantsModule::puedeParticipar($id_new_1, $dia_hora_reserva, $duracion_reserva, $db) ||
-              !ParticipantsModule::puedeParticipar($id_new_2, $dia_hora_reserva, $duracion_reserva, $db) ||
-              !ParticipantsModule::puedeParticipar($id_new_3, $dia_hora_reserva, $duracion_reserva, $db)) {
-                $res->getBody()->write(json_encode(['error' => 'Alguno de los nuevos participantes no puede participar en la reserva']));
-                return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400);
-
-          }
-
-          //agrego los nuevos participantes
-          $insert = $db->prepare("INSERT INTO booking_participants (booking_id, user_id) VALUES (?, ?), (?, ?), (?, ?)");
-          $insert->execute([$bookingId, $id_new_1, $bookingId, $id_new_2, $bookingId, $id_new_3]);
-          //elimino los participantes
-          $delete = $db->prepare("DELETE FROM booking_participants WHERE booking_id = ? AND user_id IN (?, ?, ?)");
-          $delete->execute([$bookingId, $id_del_1, $id_del_2, $id_del_3]);  
-
-          $res->getBody()->write(json_encode(['success' => 'Participantes actualizados correctamente']));
-          return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(200);   
+        return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(200);   
 
 
         }
-        //elimina dos participantes que estan y mantiene un participante -- pasa a ser uno vs uno
-
-        if(!empty($id_del_1) && !empty($id_del_2) && empty($id_del_3) && empty($id_new_1) && empty($id_new_2) && empty($id_new_3)){
-          //verifico que los participantes a eliminar esten en la reserva
-          if (!ParticipantsModule::estaEnLaReserva($bookingId, $id_del_1, $db) ||
-              !ParticipantsModule::estaEnLaReserva($bookingId, $id_del_2, $db)) {
-                $res->getBody()->write(json_encode(['error' => 'Alguno de los participantes a eliminar no está en la reserva']));
-                return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
-          }
-
-          //elimino los participantes
-          $delete = $db->prepare("DELETE FROM booking_participants WHERE booking_id = ? AND user_id IN (?, ?)");
-          $delete->execute([$bookingId, $id_del_1, $id_del_2]);  
-
-          $res->getBody()->write(json_encode(['success' => 'Participantes actualizados correctamente']));
-          return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(200);
-
-        }
-        //agrega dos participantes nuevos y elimina dos participantes que estan -- sigue siendo dos vs dos
-        if(!empty($id_new_1) && !empty($id_new_2) && empty($id_new_3) && !empty($id_del_1) && !empty($id_del_2) && empty($id_del_3)){
-          //verifico que los nuevos participantes no esten ya en la reserva
-          if (ParticipantsModule::estaEnLaReserva($bookingId, $id_new_1, $db) ||
-              ParticipantsModule::estaEnLaReserva($bookingId, $id_new_2, $db)) {
-                $res->getBody()->write(json_encode(['error' => 'Alguno de los nuevos participantes ya está en la reserva']));
-                return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
-          }
-          //verifico que los participantes a eliminar esten en la reserva
-          if (!ParticipantsModule::estaEnLaReserva($bookingId, $id_del_1, $db) ||
-              !ParticipantsModule::estaEnLaReserva($bookingId, $id_del_2, $db)) {
-                $res->getBody()->write(json_encode(['error' => 'Alguno de los participantes a eliminar no está en la reserva']));
-                return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
-          }
-
-          if (!ParticipantsModule::puedeParticipar($id_new_1, $dia_hora_reserva, $duracion_reserva, $db) ||
-              !ParticipantsModule::puedeParticipar($id_new_2, $dia_hora_reserva, $duracion_reserva, $db)) {
-                $res->getBody()->write(json_encode(['error' => 'Alguno de los nuevos participantes no puede participar en la reserva']));
-                return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400);
-
-          }
-
-          //agrego los nuevos participantes
-          $insert = $db->prepare("INSERT INTO booking_participants (booking_id, user_id) VALUES (?, ?), (?, ?)");
-          $insert->execute([$bookingId, $id_new_1, $bookingId, $id_new_2]);
-          //elimino los participantes
-          $delete = $db->prepare("DELETE FROM booking_participants WHERE booking_id = ? AND user_id IN (?, ?)");
-          $delete->execute([$bookingId, $id_del_1, $id_del_2]);  
-
-          $res->getBody()->write(json_encode(['success' => 'Participantes actualizados correctamente']));
-          return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(200);   
-
-
-      }
+    
     }
 
-    //para cualquier otro caso, devuelve error
+
+
+     //para cualquier otro caso, devuelve error
     $res->getBody()->write(json_encode(['error' => 'No se puede modificar la reserva con los participantes indicados']));
     return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(400); 
 
 
-   }
+  }
+
 }
