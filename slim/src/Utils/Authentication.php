@@ -55,6 +55,15 @@ final class Authentication {
     return (int)($auth['is_admin'] ?? 0) === 1;
   }
 
+  public static function verifyPassword(string $plain, string $stored): bool {
+    // password guardada en texto plano
+    return $plain === $stored;
+  }
+
+  /* public static function verifyPassword(string $plain, string $stored): bool {
+    return md5($plain) === $stored; // solo si en BD está el MD5
+  } */
+
 }
 
 
