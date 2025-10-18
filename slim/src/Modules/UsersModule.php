@@ -20,14 +20,12 @@ public static function searchUsers(Request $req, Response $res): Response {
     $search   = trim((string)($req->getQueryParams()['search'] ?? ''));
     // ahora si no se envía o viene vacío, devolver todos los users
 
-    try { // CAMBIO: manejo de errores de BD/infra
+    try { 
       $db = \DB::getConnection();
 
       //habilita el uso de LIKE para que sea la busqueda parcial
-
       // si no hay search, devuelvo todos los usuarios NO admin
       if ($search === '') {
-        // Sin filtro: todos los NO admin
         $sql = "SELECT id, email, first_name, last_name, is_admin
                 FROM users
                 WHERE is_admin = 0
@@ -68,7 +66,7 @@ public static function searchUsers(Request $req, Response $res): Response {
 
 
   // GET /user/{id} ---------------------------------------------------------------------------------- 
-public static function getUserById(Request $req, Response $res, array $args): Response {
+  public static function getUserById(Request $req, Response $res, array $args): Response {
     $id = $args['id'] ?? 0;
     $auth = $req->getAttribute('auth_user'); // id y is_admin desde el token (validado por el middleware)
     $targetId = (int)$id;//id desde la ruta
@@ -121,17 +119,17 @@ public static function getUserById(Request $req, Response $res, array $args): Re
       $res->getBody()->write(json_encode(['error' => 'Error interno']));
       return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(500);
     }
-}
+ }
 
   // POST /user --------------------------------------------------------------------------------------
   public static function createUser(Request $req, Response $res): Response {
     // ahora con body parsing middleware
     $data = $req->getParsedBody(); 
 
-    $email     = (string)($data['email']      ?? '');
-    $password  = (string)($data['password']   ?? '');
+    $email     = (string)($data['email'] ?? '');
+    $password  = (string)($data['password'] ?? '');
     $firstName = (string)($data['first_name'] ?? '');
-    $lastName  = (string)($data['last_name']  ?? '');
+    $lastName  = (string)($data['last_name'] ?? '');
 
     //valido que los campos obligatorios no estén vacíos
     // CAMBIO: juntamos errores por campo en un arreglo (como pidió la cátedra)
