@@ -21,6 +21,9 @@ $app->add( function ($request, $handler) {
     ;
 });
 
+//
+$app->addBodyParsingMiddleware();
+
 // ACÁ VAN LOS ENDPOINTS 
 
 // Auth

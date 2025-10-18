@@ -55,14 +55,21 @@ final class Authentication {
     return (int)($auth['is_admin'] ?? 0) === 1;
   }
 
-  public static function verifyPassword(string $plain, string $stored): bool {
-    // password guardada en texto plano
-    return $plain === $stored;
-  }
 
-  /* public static function verifyPassword(string $plain, string $stored): bool {
-    return md5($plain) === $stored; // solo si en BD está el MD5
-  } */
+  public static function hashPassword(string $plainPassword): string {
+    // Si la contraseña viene vacía, devuelvo cadena vacía para evitar errores
+    if (trim($plainPassword) === '') return '';
+
+    // Hashe simple y efectivo
+    // password_hash usa el algoritmo BCRYPT por defecto, seguro y práctico
+    return password_hash($plainPassword, PASSWORD_DEFAULT);
+}
+
+  // Verifica si la contraseña en texto plano coincide con el hash almacenado
+  public static function verifyPassword(string $plainPassword, string $hashedPassword): bool {
+    //password_verify compara la contraseña en texto plano con el hash
+    return password_verify($plainPassword, $hashedPassword);
+}
 
 }
 
