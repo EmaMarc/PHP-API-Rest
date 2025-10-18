@@ -132,7 +132,7 @@ public static function searchUsers(Request $req, Response $res): Response {
     $lastName  = (string)($data['last_name'] ?? '');
 
     //valido que los campos obligatorios no estén vacíos
-    // CAMBIO: juntamos errores por campo en un arreglo (como pidió la cátedra)
+    // ahora los errores en un array
     $errors = [
       'email'      => [],
       'password'   => []
