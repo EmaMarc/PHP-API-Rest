@@ -71,16 +71,39 @@ final class BookingsModule{
         // ahora con body parsing middleware
         $data = $req->getParsedBody();
         
-        if (!$data || !is_array($data)) {//verifica que se hayan recibido datos
-            $res->getBody()->write(json_encode(['error' => 'No se recibieron datos válidos']));
-            return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
-        }
+        //if (!$data || !is_array($data)) {//verifica que se hayan recibido datos
+        //    $res->getBody()->write(json_encode(['error' => 'No se recibieron datos válidos']));
+        //    return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
+        //}
+//
+        $campos_faltantes = [];
 
         // extrae los campos ingresados
         $dia_hora_reserva = trim($data['booking_datetime'] ?? '');
+        if (empty($dia_hora_reserva)) {
+            $campos_faltantes[] = "'booking_datetime' (fecha y hora de la reserva)";
+        }
+
         $cant_bloques = (int)($data['duration_blocks'] ?? 0);
+        if (empty($cant_bloques)) {
+            $campos_faltantes[] = "'duration_blocks' (cantidad de bloques 1 al 6)";
+        }
+
         $court_id = (int)($data['court_id'] ?? 0);
+        if (empty($court_id)) {
+            $campos_faltantes[] = "'court_id' (ID de la cancha)";
+        }   
         $participants = $data['participants'] ?? [];//vector con los id de los participantes
+        if (empty($participants)) {
+            $campos_faltantes[] = "'participants' (arreglo con los ID de los participantes)";
+        }
+
+        // Si faltan campos obligatorios, retornar error
+        if (!empty($campos_faltantes)) {
+            $res->getBody()->write(json_encode(['error falta los siguientes campos' => $campos_faltantes]));
+            return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
+        }
+
 
         // Validar que participantes sea un arreglo ejem que no sea 3 , "hola",  "3,4,5"
         if (!is_array($participants)) {

@@ -38,7 +38,7 @@ final class CourtsModule{
         $description = $data['description'] ?? null; // puede ser nulo
 
         if(empty($name)) {
-            $res->getBody()->write(json_encode(['error' => 'El nombre es obligatorio']));
+            $res->getBody()->write(json_encode(['error' => "El campo 'name' (nombre) es obligatorio"]));
             return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
         }
 
