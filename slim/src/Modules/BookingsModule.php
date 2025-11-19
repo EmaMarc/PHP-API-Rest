@@ -75,7 +75,7 @@ final class BookingsModule{
         //    $res->getBody()->write(json_encode(['error' => 'No se recibieron datos válidos']));
         //    return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
         //}
-//
+
         $campos_faltantes = [];
 
         // extrae los campos ingresados
@@ -363,7 +363,7 @@ final class BookingsModule{
             //si la fecha esta vacia muestro todas las reservas
             if (!$date) {
             
-                $sql = $db->query("SELECT b.id, b.booking_datetime, b.duration_blocks, c.name AS court_name, c.description AS court_description 
+                $sql = $db->query("SELECT b.id, b.booking_datetime, b.duration_blocks, b.created_by, c.name AS court_name, c.description AS court_description 
                    FROM bookings b  
                    INNER JOIN courts c ON b.court_id = c.id
                    ORDER BY c.name, b.booking_datetime");
@@ -398,7 +398,7 @@ final class BookingsModule{
              }
 
             //verifico si la reserva existe 
-            $sql = $db->prepare ("SELECT b.id, b.booking_datetime, b.duration_blocks, c.name AS court_name, c.description AS court_description 
+            $sql = $db->prepare ("SELECT b.id, b.booking_datetime, b.duration_blocks, b.created_by, c.name AS court_name, c.description AS court_description 
                                 FROM bookings b  INNER JOIN courts c ON b.court_id = c.id
                                 WHERE DATE(booking_datetime) = ?
                                 ORDER BY c.name, b.booking_datetime ");//date toma solo el dia

@@ -34,6 +34,8 @@ require __DIR__ . '/routes/users/users.php';
 
 // Courts
 require __DIR__ . '/routes/courts/courts.php';
+    
+
 
 // Booking
 require __DIR__ . '/routes/booking/booking.php';
