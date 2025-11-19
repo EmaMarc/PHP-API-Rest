@@ -21,3 +21,6 @@ $app->delete('/booking/{id}', [BookingsModule::class, 'eliminar'])->add(new Auth
 //GET muestras las reservas de un dia    /bookings?date=2025-10-06
 //no hace falta ponerle lo que esta despues del ? slim no lo reconoce 
 $app->get('/booking', [BookingsModule::class, 'reservas']);
+
+////get /booking/participants/{id} - muestra los participantes de una reserva
+$app->get('/booking/participants/{id}', [BookingsModule::class, 'obtenerNombresParticipantes']);
