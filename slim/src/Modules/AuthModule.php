@@ -42,7 +42,7 @@ class AuthModule {
         
         //busco el usuario por email 
         //ahora con prepare y execute
-        $sql = "SELECT id, password, is_admin
+        $sql = "SELECT id, password, is_admin, first_name
                 FROM users
                 WHERE email = ?
                 LIMIT 1";

@@ -1,0 +1,57 @@
+[33m991f98a[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m se modifico el endpoint login ahora devuelve el token, el id y nombre
+[33m1b4f3a3[m se modifico el endpoint login ahora devuelve el token, el id y nombre
+[33m6e32085[m se modifico el  endpoint login ahora devuelve el token y el id
+[33mcaece8b[m se agrego un endpoint en booking para el front
+[33m67d2c1f[m correcciones II
+[33m6ae5b17[m ultimas correcciones
+[33mf9d4c18[m correcciones listas
+[33ma34c513[m Update error handling in searchUsers to return errors in an array format
+[33md774b84[m Refactor searchUsers and getUserById methods for improved error handling and code clarity
+[33m8e4ac09[m Refactor authentication and user management modules
+[33m03507aa[m Add plain password verification method to Authentication class
+[33madf7ab7[m listo sin  problemas es ParticipantsModule
+[33m19ec75c[m ultimas modificaciones, hay problemas es ParticipantsModule
+[33mbecb3f3[m Refactor del refreshToken y aplicados a todas las interacciones que requieran un usuario logeado
+[33m2f319b4[m se agrego el POST a BookingModule  TT.TT
+[33ma216ac9[m se agrego el Middleware a BookingModule y a ParticipantsModule
+[33mb8fdad7[m verificacion de formato de fecha en  GET  de bookings
+[33m92563ba[m añadi PUT en ParticipantsModule sin fallas
+[33m22eb9df[m añadi PUT en ParticipantsModule le faltan cosas
+[33m09883dd[m añadi el middleware al POST y PUT de court
+[33md923259[m Enhance authorization checks for user and court operations by adding middleware and admin validation
+[33m39ac9e8[m Merge branch 'main' of https://github.com/EmaMarc/PHP-API-Rest
+[33m4f53753[m Add isAdmin method to Authentication class for improved authorization checks
+[33m132fa5b[m añadi el middleware al delete de court
+[33md26b394[m agregar
+[33mcf7705c[m Implement update participant functionality and enhance authorization checks
+[33mbabe693[m Merge branch 'main' of https://github.com/EmaMarc/PHP-API-Rest
+[33m6439122[m Refactor authorization logic in Authentication class to simplify user edit checks; update UsersModule to align with new authorization method
+[33me1cb863[m se agrego GET  de bookings
+[33mefc0e1d[m se agrego DELETE de bookings
+[33m2304ad4[m se agrego DELETE de court
+[33mf3fcc20[m se agrego POST, PUT de court
+[33ma585d89[m Merge branch 'main' of https://github.com/EmaMarc/PHP-API-Rest
+[33mff4e88c[m se añadio getCourtsById
+[33m2758409[m Implement deleteUser endpoint with authorization checks and error handling
+[33m96d5233[m Refactor user routes for clarity and add authentication middleware to update and delete user endpoints; implement search functionality in UsersModule
+[33m34afdcb[m Add AuthMiddleware for token validation and extend expiration; enhance authorization logic in Authentication class
+[33m33b92d3[m Refactor route comments in CourtsModule and UsersModule for clarity, and update Authentication class formatting
+[33m3cdd6aa[m se añadio CourtsModule
+[33m52f9d4e[m Implement authentication module with login and logout functionality, refactor routes, and remove unused Auth utility class
+[33m8755d54[m Implement user retrieval by ID and enhance error handling in UsersModule
+[33mdb81b26[m porfin app funcionando lpm
+[33m0482a18[m Normalize casing for database utility class and update related imports
+[33m4ba2aaa[m Refactor user routes and remove unused UserController and UserModel
+[33mc85f69a[m correccion de rutas
+[33m469e944[m cambio de nombre
+[33m80e6a71[m cambio de nombre
+[33md25b966[m continua con problemas en la conexion a la bd de phpmyadmin
+[33ma27c5d4[m Update database import path in courts.php
+[33me899ed9[m Refactor eliminar method placeholder and add comments for future implementation
+[33m983a421[m Merge branch 'main' of https://github.com/EmaMarc/PHP-API-Rest
+[33m9cdf12b[m Update welcome message and clean up whitespace in courts.php
+[33m8a38719[m prueba
+[33me9ac0e0[m Fix syntax error in eliminar method and improve query execution logic
+[33m270887e[m actualizado courts y auth
+[33ma40890e[m UserController, UserModel y DB copiados desde el ejemplo de la catedra
+[33mba5a0f4[m initial commit
