@@ -72,10 +72,11 @@ class AuthModule {
           return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(500);
         }
 
+        $nombre = $row['first_name'] ?? '';
          // devuelvo el id y token
         $responseData = [
             'id'         => (int)$row['id'],
-            'first_name' => $row['first_name'],
+            'first_name' => $nombre,
             //'last_name'  => $row['last_name'],
             'is_admin'   => (bool)$row['is_admin'],
             'token'      => $token
