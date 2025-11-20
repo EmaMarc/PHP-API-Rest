@@ -75,7 +75,7 @@ class AuthModule {
          // devuelvo el id y token
         $responseData = [
             'id'         => (int)$row['id'],
-            //'first_name' => $row['first_name'],
+            'first_name' => $row['first_name'],
             //'last_name'  => $row['last_name'],
             'is_admin'   => (bool)$row['is_admin'],
             'token'      => $token
