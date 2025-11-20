@@ -72,9 +72,19 @@ class AuthModule {
           return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(500);
         }
 
-        //devuelvo el token
-        $res->getBody()->write(json_encode(['token' => $token]));
+         // devuelvo el id y token
+        $responseData = [
+            'id'         => (int)$row['id'],
+            //'first_name' => $row['first_name'],
+            //'last_name'  => $row['last_name'],
+            'is_admin'   => (bool)$row['is_admin'],
+            'token'      => $token
+        ];
+
+        $res->getBody()->write(json_encode($responseData));
         return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(200);
+  
+      
       } catch (\Throwable $e) {
         //ahora un catch general para errores de BD
         error_log($e);
