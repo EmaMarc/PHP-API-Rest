@@ -5,22 +5,30 @@ require_once __DIR__ . '/../../src/Utils/db.php';
 
 final class Authentication {
   public static function makeToken(\PDO $db, int $userId, int $ttl = 300): ?string {
-    //uniqid genera un id unico. Y md5 lo convierte en 32
-    $token = md5(uniqid());
-    //expired = ahora + ttl(5mins)
-    $expired = date('Y-m-d H:i:s', time() + $ttl);
+    // Genero el token y le hago trim por las dudas
+    $token = trim(md5(uniqid()));
 
-    //actualizo el token y expired en la base de datos
+    // Genero fecha de expiración y también trim
+    $expired = trim(date('Y-m-d H:i:s', time() + $ttl));
+
+    // Consulta con TRIM() aplicado dentro del SQL
     $sql = "UPDATE users
-            SET token = " . $db->quote($token) . ",
-            expired = " . $db->quote($expired) . "
-            WHERE id = $userId";
+            SET token = TRIM(?), 
+                expired = TRIM(?)
+            WHERE id = ?";
 
-    //ejecuto la consulta, si no se pudo ejecutar, devuelvo null
-    $ok = $db->exec($sql);
-    //si se actualizo al menos una fila, devuelvo el token, sino null
-    return ($ok > 0) ? $token : null;
-  }
+    $stmt = $db->prepare($sql);
+
+    // Orden exacto de los parámetros
+    $ok = $stmt->execute([
+        $token,   // TRIM(?) → token limpio
+        $expired, // TRIM(?) → fecha limpia
+        $userId   // id
+    ]);
+
+    return ($ok && $stmt->rowCount() > 0) ? $token : null;
+}
+
 
   // Solo refresca la expiración usando la hora de la BD
   public static function refreshToken(\PDO $db, int $userId, int $ttlSeconds = 300): bool {
