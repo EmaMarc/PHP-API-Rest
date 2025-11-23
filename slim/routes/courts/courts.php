@@ -25,4 +25,11 @@ $app->delete('/court/{id}', [CourtsModule::class, 'eliminar'])->add(new AuthMidd
 
 
 //GET /{id} obtiene la informacion de cancha
-$app->get('/court/{id}', [CourtsModule::class, 'getCourtsById']); 
+//$app->get('/court/{id}', [CourtsModule::class, 'getCourtsById']); 
+
+
+//se agrego solo para el frontend
+//GET  obtiene la informacion de TODAS las cancha con query params opcionales
+$app->get('/court', [CourtsModule::class, 'getCourts']); 
+
+

@@ -77,8 +77,5 @@ final class Authentication {
   public static function verifyPassword(string $plainPassword, string $hashedPassword): bool {
     //password_verify compara la contraseña en texto plano con el hash
     return password_verify($plainPassword, $hashedPassword);
+  }
 }
-
-}
-
-

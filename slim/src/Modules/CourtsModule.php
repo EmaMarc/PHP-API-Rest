@@ -285,6 +285,50 @@ final class CourtsModule{
         }
     
     }
-        
+
+    public static function getCourts(Request $req, Response $res, array $args): Response {
+    $queryParams = $req->getQueryParams();
+    $id = isset($queryParams['id']) ? (int)$queryParams['id'] : null;
+
+    $db = \DB::getConnection();
+
+    try {
+        if ($id === null) {
+            // No se pasó id → devolver todas las canchas
+            $stmt = $db->prepare("SELECT * FROM courts");
+            $stmt->execute();
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $res->getBody()->write(json_encode($rows));
+            return $res->withHeader('Content-Type', 'application/json')->withStatus(200);
+        }
+
+        if ($id <= 0) {
+            $res->getBody()->write(json_encode(['error' => 'ID de cancha no es válido']));
+            return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
+        }
+
+        // Se pasó un id válido → buscar esa cancha
+        $stmt = $db->prepare("SELECT * FROM courts WHERE id = ?");
+        $stmt->execute([$id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$row) {
+            $res->getBody()->write(json_encode(['error' => 'No se encontró la cancha']));
+            return $res->withHeader('Content-Type', 'application/json')->withStatus(404);
+        }
+
+        $res->getBody()->write(json_encode($row));
+        return $res->withHeader('Content-Type', 'application/json')->withStatus(200);
+
+    } catch (PDOException $e) {
+        $res->getBody()->write(json_encode([
+            'error' => 'Error al consultar la base de datos',
+            'details' => $e->getMessage()
+        ]));
+        return $res->withHeader('Content-Type', 'application/json')->withStatus(500);
+    }
+}
+
 
 } 
