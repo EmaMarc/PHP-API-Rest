@@ -427,7 +427,7 @@ final class BookingsModule{
     }
 
 
-    //esto solo se hizo para obtener los nombre de los usuarios que participan en una reserva
+//esto solo se hizo para obtener los nombre de los usuarios que participan en una reserva
     //get /booking/participants/{id} -------------------------------------------------------------------------------
     public static function obtenerNombresParticipantes(Request $req, Response $res, array $args): Response {
         
@@ -453,7 +453,7 @@ final class BookingsModule{
             if (!empty($row)){ //la reserva existe 
 
                 //obtengo los nombres de los participantes asociados a la reserva
-                $sql = $db->prepare ("SELECT u.id, u.first_name
+                $sql = $db->prepare ("SELECT u.id, u.first_name, u.last_name
                                       FROM users u
                                       INNER JOIN booking_participants bp ON u.id = bp.user_id
                                       WHERE bp.booking_id = ?");
@@ -476,4 +476,50 @@ final class BookingsModule{
         }    
     }
     
+    public static function infoReserva(Request $req, Response $res, array $args): Response {
+        
+        $id = (int)($args['id']);//id desde la ruta y verifica que sea un nro
+
+        if (!$id) {//
+            
+            $res->getBody()->write(json_encode(['error' => 'Falta el ID de la reserva']));
+            return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
+        }
+        //si en menor a cero retormo error 
+        if ($id <= 0) {
+            $res->getBody()->write(json_encode(['error' => 'ID de reserva inválido']));
+            return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
+        }
+
+         try{
+
+            $db = \DB::getConnection();
+
+            //verifico si la reserva existe 
+            $sql = $db->prepare ("SELECT b.id, b.booking_datetime, b.duration_blocks, b.created_by, c.name AS court_name, c.description AS court_description 
+                                FROM bookings b  INNER JOIN courts c ON b.court_id = c.id
+                                WHERE b.id = ?");
+
+            $sql->execute([$id]); //retorna F o V
+            $row = $sql->fetchAll(PDO::FETCH_ASSOC);
+
+            if (!empty($row)){ //la reserva existe 
+
+                //devuelve la info de la reserva encontrada
+                $res->getBody()->write(json_encode($row[0]));
+                return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(200);
+            }else {
+                $res->getBody()->write(json_encode(['error' => 'No se encontró la reserva'])); 
+                return $res->withHeader('Content-Type', 'application/json')->withStatus(400);
+            }
+        } catch (\Throwable $e) {
+            //  \Throwable es la interfaz base de todo lo que puede ser lanzado con throw
+            // y capturado con catch. engloba tanto a las excepciones (Exception) como a los errores fatales (Error).
+            error_log($e);
+            $res->getBody()->write(json_encode(['error' => 'Error interno']));  
+            return $res->withHeader('Content-Type','application/json; charset=utf-8')->withStatus(500);
+        }
+    }
+    
+
 }

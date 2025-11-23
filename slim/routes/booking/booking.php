@@ -22,5 +22,12 @@ $app->delete('/booking/{id}', [BookingsModule::class, 'eliminar'])->add(new Auth
 //no hace falta ponerle lo que esta despues del ? slim no lo reconoce 
 $app->get('/booking', [BookingsModule::class, 'reservas']);
 
+
+//definidos para el frontend
+
 ////get /booking/participants/{id} - muestra los participantes de una reserva
 $app->get('/booking/participants/{id}', [BookingsModule::class, 'obtenerNombresParticipantes']);
+
+
+////get /booking/{id} - muestra la informacion de una reserva
+$app->get('/booking/{id}', [BookingsModule::class, 'infoReserva']);
