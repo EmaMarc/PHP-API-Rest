@@ -1,6 +1,10 @@
 Seminario de PHP, React, y API Rest
 ===================================
 
+
+## se modifico la zona horaria  en docker-compose.yml
+
+
 ## Configuración inicial
 
 1. Crear archivo `.env` a partir de `.env.dist`
@@ -23,10 +27,17 @@ donde *seminariophp* es el valor de la variable `DB_VOLUME`
 docker compose up -d
 ```
 
-## Terminar servicios
+## Terminar servicios ----------------
 
+
+### elimina los datos de la DB
 ```bash
 docker compose down -v
+```
+
+### conserv los datos de la DB
+```bash
+docker compose down 
 ```
 
 ## Eliminar base de datos

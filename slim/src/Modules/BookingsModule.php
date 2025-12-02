@@ -370,7 +370,7 @@ final class BookingsModule{
                 $row = $sql->fetchAll(PDO::FETCH_ASSOC);
 
 
-                if (!($row)){
+                 if (!($row)){
                     $res->getBody()->write(json_encode(['error' => 'No se encontraron reservas']));
                     return $res->withHeader('Content-Type', 'application/json')->withStatus(404);
 
@@ -405,16 +405,21 @@ final class BookingsModule{
             $sql->execute([$date]); //retorna F o V
             $row = $sql->fetchAll(PDO::FETCH_ASSOC); //devuelve todos los resultados
 
+            /*
             if (!($row)){
                 $res->getBody()->write(json_encode(['error' => 'No se encontró reservas para ese dia']));
                 return $res->withHeader('Content-Type', 'application/json')->withStatus(404);
 
-            }else{
+            }else{ */
 
                 //devuelve las reservas encontradas de ese dia 
+                //si es vacio devuelve [] vacio 
+                //devolver vacio no es error 404
                 $res->getBody()->write(json_encode($row));
                 return $res->withHeader('Content-Type', 'application/json')->withStatus(200);
-            }
+           // }
+
+
         } catch (\Throwable $e) {
             //  \Throwable es la interfaz base de todo lo que puede ser lanzado con throw
             // y capturado con catch. engloba tanto a las excepciones (Exception) como a los errores fatales (Error).
