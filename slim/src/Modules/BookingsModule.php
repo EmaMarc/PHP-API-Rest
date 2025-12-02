@@ -432,8 +432,9 @@ final class BookingsModule{
     }
 
 
-//esto solo se hizo para obtener los nombre de los usuarios que participan en una reserva
-    //get /booking/participants/{id} -------------------------------------------------------------------------------
+
+ //esto solo se hizo para obtener los nombre de los usuarios que participan en una reserva
+//get /booking/participants/{id} -------------------------------------------------------------------------------
     public static function obtenerNombresParticipantes(Request $req, Response $res, array $args): Response {
         
         $id = (int)($args['id']);//id desde la ruta y verifica que sea un nro
@@ -458,7 +459,7 @@ final class BookingsModule{
             if (!empty($row)){ //la reserva existe 
 
                 //obtengo los nombres de los participantes asociados a la reserva
-                $sql = $db->prepare ("SELECT u.id, u.first_name, u.last_name
+                $sql = $db->prepare ("SELECT u.id, u.first_name, u.last_name, u.email
                                       FROM users u
                                       INNER JOIN booking_participants bp ON u.id = bp.user_id
                                       WHERE bp.booking_id = ?");
